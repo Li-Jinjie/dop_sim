@@ -95,11 +95,4 @@ yaw_rate_kd = 0.005
 
 # ---------- power distribution -------------
 # formulation: kt * [o1, o2, o3, o4]^T = G_1_T * [trust, tau_x, tau_y, tau_z]^T
-G_1_T = np.array(
-    [
-        [1, 1 / l_s_beta, 1 / l_c_beta, -k_t / k_q],
-        [1, -1 / l_s_beta, 1 / l_c_beta, k_t / k_q],
-        [1, -1 / l_s_beta, -1 / l_c_beta, -k_t / k_q],
-        [1, 1 / l_s_beta, -1 / l_c_beta, k_t / k_q],
-    ]
-)
+G_1_T = MAV.G_1.T

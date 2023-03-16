@@ -100,7 +100,7 @@ class QdDynamics(nn.Module):
         o3 = delta[:, 2:3, :]
         o4 = delta[:, 3:4, :]
 
-        thrust_per_motor = torch.cat((o1 ** 2, o2 ** 2, o3 ** 2, o4 ** 2), 1) * QMAV.k_t
+        thrust_per_motor = QMAV.k_t * torch.cat((o1 ** 2, o2 ** 2, o3 ** 2, o4 ** 2), 1)
 
         thrust_torque = self.G_1_torch @ thrust_per_motor
 

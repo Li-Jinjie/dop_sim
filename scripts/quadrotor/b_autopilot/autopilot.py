@@ -8,14 +8,13 @@ LastEditors: LI Jinjie
 LastEditTime: 11/2/2022 9:28 PM
 Description: file content
 """
-import numpy as np
 import torch
 import torch.nn as nn
 import math
 
 from ..params import control_param as AP
-from ..tools.wrap import wrap
-from ..tools.saturate import saturate_w_float_limit
+from scripts.quadrotor.tools.wrap import wrap
+from scripts.quadrotor.tools.saturate import saturate_w_float_limit
 from .pid_control import PIDControl
 from .pd_control import PDControl
 

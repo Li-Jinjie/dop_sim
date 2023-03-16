@@ -8,16 +8,15 @@ LastEditors: LI Jinjie
 LastEditTime: 11/5/2022 10:32 AM
 Description: file content
 """
-import time
 import torch.nn as nn
 import torch
 
 # ===== quadrotor related =====
-from a_dynamics import QdDynamics
-from b_autopilot import AtpRate
+from .a_dynamics import QdDynamics
+from .b_autopilot import AtpRate
 
 
-class MulQd(nn.Module):
+class MulQuadrotors(nn.Module):
     def __init__(self, num_agent: int, ts_control: float, dtype=torch.float64):
         super().__init__()
         self.autopilot = AtpRate(num_agent, ts_control, dtype)
@@ -28,7 +27,3 @@ class MulQd(nn.Module):
         ego_states_new = self.dynamics(ego_states, delta_cmd, sim_ts)
 
         return ego_states_new
-
-
-if __name__ == "__main__":
-    mul_qd = MulQd(2, 0.02, torch.float64)

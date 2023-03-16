@@ -8,7 +8,6 @@ LastEditors: LI Jinjie
 LastEditTime: 10/15/2022 8:21 PM
 Description: file content
 """
-import numpy as np
 import torch
 import torch.nn as nn
 
@@ -33,7 +32,7 @@ class ODE(nn.Module):
 
 
 if __name__ == "__main__":
-    from scripts.a_dynamics.rigid_body_use_vw import RigidBodyUseVw
+    from scripts.quadrotor.a_dynamics import RigidBodyUseVw
 
     ode_func = ODE(RigidBodyUseVw).to("cuda")
     ode = torch.jit.script(ode_func)

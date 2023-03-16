@@ -1,5 +1,3 @@
-import sys
-
 import numpy as np
 from ..tools.rotations import euler_2_quaternion_one
 
@@ -77,7 +75,7 @@ collective_f_max = 4.0 * k_t * o_max ** 2  # N
 l_s_beta = l_frame * np.sin(beta_frame)
 l_c_beta = l_frame * np.cos(beta_frame)
 
-# formulation: kt * [o1, o2, o3, o4]^T = G_1_T * [trust, tau_x, tau_y, tau_z]^T
+# formulation: kt * [o1, o2, o3, o4]^T @ G_1 = [trust, tau_x, tau_y, tau_z]^T
 G_1 = np.array([[1, 1, 1, 1],
                 [l_s_beta, -l_s_beta, -l_s_beta, l_s_beta],
                 [l_c_beta, l_c_beta, -l_c_beta, -l_c_beta],
