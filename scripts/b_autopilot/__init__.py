@@ -8,4 +8,4 @@ LastEditors: LI Jinjie
 LastEditTime: 11/2/2022 8:52 PM
 Description: file content
 """
-from .autopilot import Autopilot
+from .atp_rate import AtpRate
