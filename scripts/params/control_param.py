@@ -1,16 +1,18 @@
 import sys
 
 import numpy as np
-from . import aerosonde_parameters as MAV
+from . import physical_param as MAV
 
 mass = MAV.mass
 gravity = MAV.gravity  # gravity constant
 sigma = 0.05  # low pass filter gain for derivative
 
+collective_f_max = MAV.collective_f_max
+
 l_s_beta = MAV.l_s_beta
 l_c_beta = MAV.l_c_beta
-c_t = MAV.c_t
-c_q = MAV.c_q
+k_t = MAV.k_t
+k_q = MAV.k_q
 
 # ----------position loop-------------
 """
@@ -92,12 +94,12 @@ yaw_rate_ki = 0.01
 yaw_rate_kd = 0.005
 
 # ---------- power distribution -------------
-# formulation: [o1, o2, o3, o4]^T = G_1_T * [trust, tau_x, tau_y, tau_z]^T
+# formulation: kt * [o1, o2, o3, o4]^T = G_1_T * [trust, tau_x, tau_y, tau_z]^T
 G_1_T = np.array(
     [
-        [1, 1 / l_s_beta, 1 / l_c_beta, -c_t / c_q],
-        [1, -1 / l_s_beta, 1 / l_c_beta, c_t / c_q],
-        [1, -1 / l_s_beta, -1 / l_c_beta, -c_t / c_q],
-        [1, 1 / l_s_beta, -1 / l_c_beta, c_t / c_q],
+        [1, 1 / l_s_beta, 1 / l_c_beta, -k_t / k_q],
+        [1, -1 / l_s_beta, 1 / l_c_beta, k_t / k_q],
+        [1, -1 / l_s_beta, -1 / l_c_beta, -k_t / k_q],
+        [1, 1 / l_s_beta, -1 / l_c_beta, k_t / k_q],
     ]
-) / (4 * c_t)
+)

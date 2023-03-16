@@ -12,14 +12,14 @@ Description: file content
 import torch
 import torch.nn as nn
 
-from ..parameters import aerosonde_parameters as QMAV
+from ..params import physical_param as QMAV
 
 
 class RigidBodyUseVw(nn.Module):
     def __init__(self):
         super().__init__()
         self.mass = nn.Parameter(torch.tensor(QMAV.mass), False)
-        self.Jy = nn.Parameter(torch.tensor(QMAV.Jy), False)
+        self.Jy = nn.Parameter(torch.tensor(QMAV.Iyy), False)
         self.gamma1 = nn.Parameter(torch.tensor(QMAV.gamma1), False)
         self.gamma2 = nn.Parameter(torch.tensor(QMAV.gamma2), False)
         self.gamma3 = nn.Parameter(torch.tensor(QMAV.gamma3), False)
@@ -83,7 +83,7 @@ class RigidBodyUseVw(nn.Module):
 
         # rotational dynamics, (l,m,n) is in body coordination
         p_dot = QMAV.gamma1 * p * q - QMAV.gamma2 * q * r + QMAV.gamma3 * l + QMAV.gamma4 * n
-        q_dot = QMAV.gamma5 * p * r - QMAV.gamma6 * (p ** 2 - r ** 2) + m / QMAV.Jy
+        q_dot = QMAV.gamma5 * p * r - QMAV.gamma6 * (p ** 2 - r ** 2) + m / QMAV.Iyy
         r_dot = QMAV.gamma7 * p * q - QMAV.gamma1 * q * r + QMAV.gamma4 * l + QMAV.gamma8 * n
 
         # collect the derivative of the states

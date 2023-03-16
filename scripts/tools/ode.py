@@ -33,7 +33,7 @@ class ODE(nn.Module):
 
 
 if __name__ == "__main__":
-    from models.fixed_wing.a_dynamics.rigid_body_use_vw import RigidBodyUseVw
+    from scripts.a_dynamics.rigid_body_use_vw import RigidBodyUseVw
 
     ode_func = ODE(RigidBodyUseVw).to("cuda")
     ode = torch.jit.script(ode_func)

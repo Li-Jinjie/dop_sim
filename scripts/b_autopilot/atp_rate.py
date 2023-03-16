@@ -13,10 +13,10 @@ import torch
 import torch.nn as nn
 import math
 
-from ..parameters import control_parameters as AP
-from tools import wrap, saturate_w_float_limit
+from ..params import control_param as AP
+from ..tools.wrap import wrap
+from ..tools.saturate import saturate_w_float_limit
 from .pid_control import PIDControl
-from .pd_control import PDControl
 
 
 class AtpRate(nn.Module):
@@ -66,15 +66,18 @@ class AtpRate(nn.Module):
         Args:
             ego_states: [player, group, HP, north, east, down, phi, theta, psi, ew, ex, ey, ez, vx, vy, vz, u, v, w,
              p, q, r, Va, Vg, alpha, beta, gamma, chi, wn, we, xxx]
-            cmd: ["airspeed_command", "course_command", "altitude_command", "phi_feedforward"]
+            cmd: ["roll_rate_cmd", "pitch_rate_cmd", "yaw_rate_cmd", "throttle_cmd"]
+
+            rate_cmd is in rad/s.
+            Note that throttle_cmd is a [0, 1] normalized float value.
 
         Returns:
-            cmd: ["vn_cmd", "ve_cmd", "vd_cmd", "psi_cmd"]
+            cmd: [o1, o2, o3, o4], RPM
         """
-        vn_cmd = cmd[:, 0:1, :]
-        ve_cmd = cmd[:, 1:2, :]
-        vd_cmd = cmd[:, 2:3, :]
-        psi_cmd = cmd[:, 3:4, :]
+        roll_rate_cmd = cmd[:, 0:1, :]
+        pitch_rate_cmd = cmd[:, 1:2, :]
+        yaw_rate_cmd = cmd[:, 2:3, :]
+        throttle_cmd = cmd[:, 3:4, :]
 
         vx = ego_states[:, 13:14, :]
         vy = ego_states[:, 14:15, :]
@@ -93,44 +96,8 @@ class AtpRate(nn.Module):
         # altitude = -ego_states[:, 5:6, :]
         # Va = ego_states[:, 22:23, :]
 
-        # ----- velocity loop -----
-        # horizontal
-        yaw_cmd = wrap(psi_cmd, self.zero_param.data, limit=math.pi)  # 偏航角，[-pi, pi]
-        c_psi_c = torch.cos(yaw_cmd)
-        s_psi_c = torch.sin(yaw_cmd)
-
-        # Input: meter / sec. Output: meter / sec^2
-        acc_x_cmd = self.acc_x_from_vx(vn_cmd, vx)
-        acc_y_cmd = self.acc_y_from_vy(ve_cmd, vy)
-        acc_z_cmd = self.acc_z_from_vz(vd_cmd, vz) - AP.gravity
-
-        # horizontal
-        pitch_cmd = torch.atan2(-acc_x_cmd * c_psi_c - acc_y_cmd * s_psi_c, -acc_z_cmd)
-        pitch_cmd = wrap(pitch_cmd, self.zero_param.data, limit=math.pi / 2.0)  # 俯仰角，[-pi/2., pi/2.]
-        c_theta_c = torch.cos(pitch_cmd)
-        # s_theta_c = np.sin(pitch_cmd)
-
-        roll_cmd = torch.atan2(c_theta_c * (-acc_x_cmd * s_psi_c + acc_y_cmd * c_psi_c), -acc_z_cmd)
-        roll_cmd = wrap(roll_cmd, self.zero_param.data, limit=math.pi / 2.0)  # 滚转角, 为避免奇异值现象，设为[-pi/2., pi/2.]
-        c_phi_c = torch.cos(roll_cmd)
-        # s_phi_c = np.sin(roll_cmd)
-
         # vertical
-        thrust_cmd = -AP.mass * acc_z_cmd / (c_phi_c * c_theta_c)
-
-        # ------ attitude loop ------
-        # Input limit
-        roll_cmd = saturate_w_float_limit(roll_cmd, -AP.roll_input_limit, AP.roll_input_limit)
-        pitch_cmd = saturate_w_float_limit(pitch_cmd, -AP.pitch_input_limit, AP.pitch_input_limit)
-
-        # Input: radians. Output: radians / sec
-        roll_rate_cmd = self.roll_rate_from_roll(roll_cmd, phi)
-        pitch_rate_cmd = self.pitch_rate_from_pitch(pitch_cmd, theta)
-        # yaw_rate_cmd = self.yaw_rate_from_yaw.update(yaw_cmd, self.true_state.psi)
-        flag_positive = (yaw_cmd >= 0) * (psi <= yaw_cmd - torch.pi)
-        flag_negative = (yaw_cmd < 0) * (psi >= yaw_cmd + torch.pi)
-        yaw_cmd = yaw_cmd - torch.pi * 2 * flag_positive + torch.pi * 2 * flag_negative
-        yaw_rate_cmd = self.yaw_rate_from_yaw(yaw_cmd, psi)
+        thrust_cmd = throttle_cmd * AP.collective_f_max
 
         # ------- attitude_rate_loop --------
         torque_x_cmd = self.Mx_from_roll_rate(roll_rate_cmd, p)
@@ -140,16 +107,19 @@ class AtpRate(nn.Module):
         # ------- power_distribution -------
         thrust_cmd[thrust_cmd < 0] = 0
 
-        omega_square = self.G_1_T_torch @ torch.cat((thrust_cmd, torque_x_cmd, torque_y_cmd, torque_z_cmd), 1)
+        thrust_per_motor = self.G_1_T_torch @ torch.cat((thrust_cmd, torque_x_cmd, torque_y_cmd, torque_z_cmd), 1)
         # force:N, torque:Nm
-        omega_square[omega_square < 0] = 0
-        delta = torch.sqrt(omega_square)
+
+        # thrust_per_motor = ct * omega ** 2
+        thrust_per_motor[thrust_per_motor < 0] = 0
+
+        delta = torch.sqrt(thrust_per_motor / AP.k_t)
 
         return delta
 
 
 if __name__ == "__main__":
-    autopilot_func = Autopilot(0.02, 2000).to("cuda")
+    autopilot_func = AtpRate(2000, 0.02).to("cuda")
     autopilot = torch.jit.script(autopilot_func)
 
     print(1)

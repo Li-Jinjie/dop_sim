@@ -3,7 +3,7 @@ pid_control
 """
 import torch
 import torch.nn as nn
-from ...tools.saturate import saturate_w_tensor_limit
+from .tools import saturate_w_tensor_limit
 
 
 class PIDControl(nn.Module):

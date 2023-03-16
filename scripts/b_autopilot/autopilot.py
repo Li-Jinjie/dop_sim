@@ -13,8 +13,9 @@ import torch
 import torch.nn as nn
 import math
 
-from ..parameters import control_parameters as AP
-from tools import wrap, saturate_w_float_limit
+from ..params import control_param as AP
+from ..tools.wrap import wrap
+from ..tools.saturate import saturate_w_float_limit
 from .pid_control import PIDControl
 from .pd_control import PDControl
 
@@ -231,10 +232,13 @@ class Autopilot(nn.Module):
         # ------- power_distribution -------
         thrust_cmd[thrust_cmd < 0] = 0
 
-        omega_square = self.G_1_T_torch @ torch.cat((thrust_cmd, torque_x_cmd, torque_y_cmd, torque_z_cmd), 1)
+        thrust_per_motor = self.G_1_T_torch @ torch.cat((thrust_cmd, torque_x_cmd, torque_y_cmd, torque_z_cmd), 1)
         # force:N, torque:Nm
-        omega_square[omega_square < 0] = 0
-        delta = torch.sqrt(omega_square)
+
+        # thrust_per_motor = ct * omega ** 2
+        thrust_per_motor[thrust_per_motor < 0] = 0
+
+        delta = torch.sqrt(thrust_per_motor / AP.k_t)
 
         return delta
 
