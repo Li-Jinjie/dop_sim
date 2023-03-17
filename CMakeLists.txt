@@ -133,6 +133,8 @@ include_directories(
 ## The recommended prefix ensures that target names across packages don't collide
 add_executable(ros_basic_node src/ros_basic_node.cpp)
 add_executable(torch_script_basic src/torch_script_basic.cpp)
+add_executable(sim src/sim_node.cpp)
+add_executable(measure_model_time src/measure_model_time.cpp)
 
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the
@@ -148,7 +150,17 @@ add_executable(torch_script_basic src/torch_script_basic.cpp)
 target_link_libraries(ros_basic_node
    ${catkin_LIBRARIES}
  )
-target_link_libraries(torch_script_basic "${TORCH_LIBRARIES}")
+target_link_libraries(torch_script_basic ${TORCH_LIBRARIES})
+
+target_link_libraries(sim
+        ${catkin_LIBRARIES}
+        ${TORCH_LIBRARIES}
+        )
+
+target_link_libraries(measure_model_time
+        ${catkin_LIBRARIES}
+        ${TORCH_LIBRARIES}
+        )
 
 set_property(TARGET torch_script_basic PROPERTY CXX_STANDARD 14)
 

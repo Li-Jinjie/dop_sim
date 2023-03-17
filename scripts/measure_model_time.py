@@ -1,10 +1,14 @@
+import time
 import torch
 from quadrotor import MulQuadrotors
 
 if __name__ == "__main__":
     # test model
     num_agent = 1000
-    mul_qd = MulQuadrotors(num_agent, 0.02, torch.float64).requires_grad_(False)
+    dt_ctl = 0.02
+    dt_sim = 0.02
+
+    mul_qd = MulQuadrotors(num_agent, dt_ctl, torch.float64).requires_grad_(False)
     if torch.cuda.is_available():
         mul_qd = mul_qd.to("cuda")
 
@@ -21,11 +25,22 @@ if __name__ == "__main__":
 
     rate_cmd = torch.zeros([num_agent, 4, 1], dtype=torch.float64).to("cuda")
 
-    state_new = sm_mul_qd(state, rate_cmd, 0.02)
+    count = 0
+    time_pre = time.perf_counter()
+    count_round_num = 500
+    while count < 5000:
+
+        state = sm_mul_qd(state, rate_cmd, dt_sim)
+        count += 1
+
+        if count % count_round_num == 0 and count != 0:
+            time_now = time.perf_counter()
+            print(f"Time cost for {count_round_num} round: {time_now - time_pre} s")
+            print("Time cost for 1 round average: ", (time_now - time_pre) / count_round_num, " s")
+            time_pre = time_now
 
     print("Model runs successfully!")
 
     # save model
     sm_mul_qd.save("../models/mul_qd_model.pt")
     print("Model saves successfully!")
-
