@@ -8,11 +8,10 @@ project(dop_qd_sim)
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
 find_package(catkin REQUIRED COMPONENTS roscpp rospy std_msgs)
+find_package(Torch REQUIRED)
 
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
-
-include_directories(${catkin_INCLUDE_DIRS})
 
 ## Uncomment this if the package has a setup.py. This macro ensures
 ## modules and global scripts declared therein get installed
@@ -114,7 +113,9 @@ catkin_package(
 ## Your package locations should be listed before other locations
 include_directories(
 # include
-# ${catkin_INCLUDE_DIRS}
+        ${catkin_INCLUDE_DIRS}
+        /home/lijinjie/libtorch-1.12.0+cu116/libtorch/include
+
 )
 
 ## Declare a C++ library
@@ -131,6 +132,7 @@ include_directories(
 ## With catkin_make all packages are built within a single CMake context
 ## The recommended prefix ensures that target names across packages don't collide
 add_executable(ros_basic_node src/ros_basic_node.cpp)
+add_executable(torch_script_basic src/torch_script_basic.cpp)
 
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the
@@ -146,6 +148,9 @@ add_executable(ros_basic_node src/ros_basic_node.cpp)
 target_link_libraries(ros_basic_node
    ${catkin_LIBRARIES}
  )
+target_link_libraries(torch_script_basic "${TORCH_LIBRARIES}")
+
+set_property(TARGET torch_script_basic PROPERTY CXX_STANDARD 14)
 
 #############
 ## Install ##
