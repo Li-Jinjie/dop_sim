@@ -33,14 +33,27 @@ if __name__ == "__main__":
         state = sm_mul_qd(state, rate_cmd, dt_sim)
         count += 1
 
-        if count % count_round_num == 0 and count != 0:
+        if count == 500:
             time_now = time.perf_counter()
-            print(f"Time cost for {count_round_num} round: {time_now - time_pre} s")
-            print("Time cost for 1 round average: ", (time_now - time_pre) / count_round_num, " s")
+            print(f"Stable running!")
+            # print(f"Time cost for {500} round: {time_now - time_pre} s")
+            # print("Time cost for 1 round average: ", (time_now - time_pre) / 500, " s")
             time_pre = time_now
+
+        if count == 500 + 2000:
+            time_now = time.perf_counter()
+            # print(f"Time cost for {2000} round: {time_now - time_pre} s")
+            print("Time cost for 1 round average: ", (time_now - time_pre) / 2000 * 1000, " ms")
+            time_pre = time_now
+
+        # if count % count_round_num == 0 and count != 0:
+        #     time_now = time.perf_counter()
+        #     print(f"Time cost for {count_round_num} round: {time_now - time_pre} s")
+        #     print("Time cost for 1 round average: ", (time_now - time_pre) / count_round_num, " s")
+        #     time_pre = time_now
 
     print("Model runs successfully!")
 
-    # save model
-    sm_mul_qd.save("../models/mul_qd_model.pt")
-    print("Model saves successfully!")
+    # # save model
+    # sm_mul_qd.save("../models/mul_qd_model.pt")
+    # print("Model saves successfully!")

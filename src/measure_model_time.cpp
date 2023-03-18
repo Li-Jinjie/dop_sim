@@ -64,17 +64,41 @@ int main() {
 
         ++count;
 
-        // time count
-        if (count % count_round_num == 0 && count != 0) {
+        if (count == 500) {
             clock_t time_now = clock();
-            std::cout << "time cost for" << count_round_num << "round: "
-                      << (time_now - time_pre) / double(CLOCKS_PER_SEC) << " s"
-                      << std::endl;
-            std::cout << "time cost for 1 round average: "
-                      << (time_now - time_pre) / double(CLOCKS_PER_SEC) / count_round_num
-                      << " s" << std::endl;
+            std::cout << "Stable running!" << std::endl;
+//            std::cout << "time cost for" << count_round_num << "round: "
+//                      << (time_now - time_pre) / double(CLOCKS_PER_SEC) << " s"
+//                      << std::endl;
+//            std::cout << "time cost for 1 round average: "
+//                      << (time_now - time_pre) / double(CLOCKS_PER_SEC) / count_round_num
+//                      << " s" << std::endl;
             time_pre = time_now;
         }
+
+        if (count == 500 + 2000) {
+            clock_t time_now = clock();
+//            std::cout << "time cost for" << count_round_num << "round: "
+//                      << (time_now - time_pre) / double(CLOCKS_PER_SEC) << " s"
+//                      << std::endl;
+            std::cout << "time cost for 1 round average: "
+                      << (time_now - time_pre) / double(CLOCKS_PER_SEC) / 2000 * 1000
+                      << " ms" << std::endl;
+            time_pre = time_now;
+        }
+
+
+//        // time count
+//        if (count % count_round_num == 0 && count != 0) {
+//            clock_t time_now = clock();
+//            std::cout << "time cost for" << count_round_num << "round: "
+//                      << (time_now - time_pre) / double(CLOCKS_PER_SEC) << " s"
+//                      << std::endl;
+//            std::cout << "time cost for 1 round average: "
+//                      << (time_now - time_pre) / double(CLOCKS_PER_SEC) / count_round_num
+//                      << " s" << std::endl;
+//            time_pre = time_now;
+//        }
     }
 
     return 0;
