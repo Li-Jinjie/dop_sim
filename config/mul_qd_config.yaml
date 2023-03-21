@@ -1,0 +1,18 @@
+ts_sim: 0.02
+ts_ctl: 0.02
+ts_viz: 0.04
+
+# ned frame
+qd_init_states:
+  - - 0.0 # px
+    - 0.0 # py
+    - 0.0 # pz
+  - - 1.0 # px
+    - 0.0 # py
+    - 0.0 # pz
+  - - 0.0 # px
+    - 1.0 # py
+    - 0.0 # pz
+  - - 1.0 # px
+    - 1.0 # py
+    - 0.0 # pz
