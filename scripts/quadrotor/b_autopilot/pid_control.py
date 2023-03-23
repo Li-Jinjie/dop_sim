@@ -7,14 +7,14 @@ from ..tools.saturate import saturate_w_tensor_limit
 
 
 class PIDControl(nn.Module):
-    def __init__(self, num_agent, Ts, dtype=torch.float64, kp=0.0, ki=0.01, kd=0.0, sigma=0.05, limit=0.0):
+    def __init__(self, num_agent, Ts, dtype=torch.float64, kp=0.0, ki=0.01, kd=0.0, sigma=0.05, u_limit=0.0):
         super().__init__()
         self.kp = nn.Parameter(kp * torch.ones([num_agent, 1, 1], dtype=dtype), False)
         assert ki != 0, "pid中的ki不能为0！ 若ki为0，请使用pd函数"  # 确保除数不为0
         self.ki = nn.Parameter(ki * torch.ones([num_agent, 1, 1], dtype=dtype), False)
         self.kd = nn.Parameter(kd * torch.ones([num_agent, 1, 1], dtype=dtype), False)
         self.Ts = nn.Parameter(Ts * torch.ones([num_agent, 1, 1], dtype=dtype), False)
-        self.limit = nn.Parameter(limit * torch.ones([num_agent, 1, 1], dtype=dtype), False)
+        self.u_limit = nn.Parameter(u_limit * torch.ones([num_agent, 1, 1], dtype=dtype), False)
 
         self.a1 = nn.Parameter(
             (2.0 * sigma - Ts) / (2.0 * sigma + Ts) * torch.ones([num_agent, 1, 1], dtype=dtype), False
@@ -52,7 +52,7 @@ class PIDControl(nn.Module):
         # PID control
         u = self.kp * error + self.ki * self.integrator + self.kd * error_dot
         # saturate PI control at limit
-        u_sat = saturate_w_tensor_limit(u, -self.limit, self.limit)
+        u_sat = saturate_w_tensor_limit(u, -self.u_limit, self.u_limit)
         # integral anti-windup
         # adjust integrator to keep u out of saturation
         flag = torch.abs(self.ki) > 0.0001

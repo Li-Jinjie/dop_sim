@@ -67,7 +67,7 @@ class Autopilot(nn.Module):
             ki=AP.vx_ki / ts_factor,
             kd=AP.vx_kd * ts_factor,
             sigma=AP.sigma,
-            limit=AP.acc_x_sat_limit,
+            u_limit=AP.acc_x_sat_limit,
         )
         self.acc_y_from_vy = PIDControl(
             num_agent,
@@ -77,7 +77,7 @@ class Autopilot(nn.Module):
             ki=AP.vy_ki / ts_factor,
             kd=AP.vy_kd * ts_factor,
             sigma=AP.sigma,
-            limit=AP.acc_y_sat_limit,
+            u_limit=AP.acc_y_sat_limit,
         )
         self.acc_z_from_vz = PIDControl(
             num_agent,
@@ -87,7 +87,7 @@ class Autopilot(nn.Module):
             ki=AP.vz_ki / ts_factor,
             kd=AP.vz_kd * ts_factor,
             sigma=AP.sigma,
-            limit=AP.acc_z_sat_limit,
+            u_limit=AP.acc_z_sat_limit,
         )
 
         # 角度环，从角度得到期望角速度
@@ -128,7 +128,7 @@ class Autopilot(nn.Module):
             ki=AP.roll_rate_ki / ts_factor,
             kd=AP.roll_rate_kd * ts_factor,
             sigma=AP.sigma,
-            limit=100,
+            u_limit=100,
         )
         self.My_from_pitch_rate = PIDControl(
             num_agent,
@@ -138,7 +138,7 @@ class Autopilot(nn.Module):
             ki=AP.pitch_rate_ki / ts_factor,
             kd=AP.pitch_rate_kd * ts_factor,
             sigma=AP.sigma,
-            limit=100,
+            u_limit=100,
         )
         self.Mz_from_yaw_rate = PIDControl(
             num_agent,
@@ -148,7 +148,7 @@ class Autopilot(nn.Module):
             ki=AP.yaw_rate_ki / ts_factor,
             kd=AP.yaw_rate_kd * ts_factor,
             sigma=AP.sigma,
-            limit=100,
+            u_limit=100,
         )
 
     def forward(self, ego_states: torch.Tensor, cmd: torch.Tensor):

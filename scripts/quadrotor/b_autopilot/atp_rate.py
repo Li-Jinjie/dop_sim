@@ -33,7 +33,7 @@ class AtpRate(nn.Module):
             ki=AP.roll_rate_ki / ts_factor,
             kd=AP.roll_rate_kd * ts_factor,
             sigma=AP.sigma,
-            limit=100,
+            u_limit=100,
         )
         self.My_from_pitch_rate = PIDControl(
             num_agent,
@@ -43,7 +43,7 @@ class AtpRate(nn.Module):
             ki=AP.pitch_rate_ki / ts_factor,
             kd=AP.pitch_rate_kd * ts_factor,
             sigma=AP.sigma,
-            limit=100,
+            u_limit=100,
         )
         self.Mz_from_yaw_rate = PIDControl(
             num_agent,
@@ -53,7 +53,7 @@ class AtpRate(nn.Module):
             ki=AP.yaw_rate_ki / ts_factor,
             kd=AP.yaw_rate_kd * ts_factor,
             sigma=AP.sigma,
-            limit=100,
+            u_limit=100,
         )
 
     def forward(self, ego_states: torch.Tensor, cmd: torch.Tensor):

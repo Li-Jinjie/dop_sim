@@ -41,7 +41,7 @@ class DopQdNode:
         )
 
         # visualization
-        self.mul_qd_text_marker_array = draw_mul_qd(self.num_agent)  # first viz, then text
+        self.viz_marker_array = draw_mul_qd(self.num_agent)  # first viz, then text
         self.marker_array_pub = rospy.Publisher("mul_qds_viz", MarkerArray, queue_size=5)
 
         self.viz_time = rospy.Time.now()  # the time of the last visualization
@@ -119,7 +119,7 @@ class DopQdNode:
         # viz
         for i in range(self.num_agent):
             # viz
-            viz_marker = self.mul_qd_text_marker_array.markers[i]
+            viz_marker = self.viz_marker_array.markers[i]
 
             viz_marker.header.stamp = rospy.Time.now()
             if is_first:
@@ -136,7 +136,7 @@ class DopQdNode:
             viz_marker.pose.orientation.z = ego_states[i][12][0]  # ez
 
             # text
-            text_marker = self.mul_qd_text_marker_array.markers[i + self.num_agent]
+            text_marker = self.viz_marker_array.markers[i + self.num_agent]
             text_marker.header.stamp = rospy.Time.now()
             if is_first:
                 text_marker.action = text_marker.ADD
@@ -145,7 +145,17 @@ class DopQdNode:
             text_marker.pose = copy.deepcopy(viz_marker.pose)
             text_marker.pose.position.z += 0.1  # bias for text
 
-        self.marker_array_pub.publish(self.mul_qd_text_marker_array)
+            # downwash
+            downwash_marker = self.viz_marker_array.markers[i + 2 * self.num_agent]
+            downwash_marker.header.stamp = rospy.Time.now()
+            if is_first:
+                downwash_marker.action = downwash_marker.ADD
+            else:
+                downwash_marker.action = downwash_marker.MODIFY
+            downwash_marker.pose = copy.deepcopy(viz_marker.pose)
+            downwash_marker.pose.position.z -= 0.6  # bias for downwash
+
+        self.marker_array_pub.publish(self.viz_marker_array)
 
 
 class TimeGuarder:
@@ -165,12 +175,18 @@ class TimeGuarder:
         self.run_t += t_one_round
         self.run_round += 1
         if self.run_round == self.measure_round:
-            rospy.loginfo(
-                f"Average running time for {self.measure_round} rounds: {self.run_t / self.measure_round * 1000:.3f} ms \n"
-                f"time step for simulation is {self.ts_sim * 1000:.3f} ms \n"
-                f"real time simulation is {self.ts_sim > self.run_t / self.measure_round} !"
-            )
-            print("One round time: {:.3f} ms".format(self.run_t / self.measure_round * 1000))
+            if self.ts_sim < self.run_t / self.measure_round:
+                rospy.logwarn(
+                    f"Simulation is too slow! ts_sim: {self.ts_sim * 1000:.3f} ms < ts_one_round: {self.run_t / self.measure_round * 1000:.3f} ms"
+                )
+
+            # # DEBUG only
+            # rospy.loginfo(
+            #     f"Average running time for {self.measure_round} rounds: {self.run_t / self.measure_round * 1000:.3f} ms \n"
+            #     f"Time step for simulation is {self.ts_sim * 1000:.3f} ms \n"
+            #     f"Real time simulation is {self.ts_sim > self.run_t / self.measure_round} !"
+            # )
+
             self.clear_run_t()
 
 

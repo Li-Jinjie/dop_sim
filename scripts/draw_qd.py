@@ -11,38 +11,44 @@ from std_msgs.msg import ColorRGBA
 from geometry_msgs.msg import PoseStamped, Point, Vector3
 import numpy as np
 
+pi = np.pi
+
+cm = 0.01  # unit: cm
+prop_r = 8 * cm  # radius of 6inch propeller
+wheelbase_p = 20 * cm  # 0.2744 * sqrt(2) / 2
+h = 5 * cm  # height of the quadrotor
+
+motor_1 = [wheelbase_p / 2, -wheelbase_p / 2]
+motor_2 = [wheelbase_p / 2, wheelbase_p / 2]
+motor_3 = [-wheelbase_p / 2, wheelbase_p / 2]
+motor_4 = [-wheelbase_p / 2, -wheelbase_p / 2]
+
+triangle_l = 8 * cm
+triangle_w = 4 * cm
+
 
 def draw_mul_qd(num_agent: int) -> MarkerArray:
     marker_array = MarkerArray()
 
-    # first viz
+    # viz
     for i in range(num_agent):
         marker = draw_one_qd(i)
         marker_array.markers.append(marker)
 
-    # second text
+    # text
     for i in range(num_agent):
         text = draw_one_text(i)
         marker_array.markers.append(text)
+
+    # downwash
+    for i in range(num_agent):
+        downwash = draw_one_downwash(i)
+        marker_array.markers.append(downwash)
 
     return marker_array
 
 
 def draw_one_qd(idx: int) -> Marker:
-    pi = np.pi
-
-    cm = 0.01  # unit: cm
-    prop_r = 8 * cm  # radius of 6inch propeller
-    wheelbase_p = 20 * cm  # 0.2744 * sqrt(2) / 2
-    h = 5 * cm  # height of the quadrotor
-
-    motor_1 = [wheelbase_p / 2, -wheelbase_p / 2]
-    motor_2 = [wheelbase_p / 2, wheelbase_p / 2]
-    motor_3 = [-wheelbase_p / 2, wheelbase_p / 2]
-    motor_4 = [-wheelbase_p / 2, -wheelbase_p / 2]
-
-    triangle_l = 8 * cm
-    triangle_w = 4 * cm
 
     # points are in FLU coordinates
     p = [Point()] * 41
@@ -153,8 +159,19 @@ def draw_one_text(idx: int) -> Marker:
     marker.text = f"qd_{idx}"
     marker.scale.z = 0.1
     marker.pose.orientation.w = 1.0
-    marker.pose.position.x = 0
-    marker.pose.position.y = 0
-    marker.pose.position.z = 0
+
+    return marker
+
+
+def draw_one_downwash(idx: int) -> Marker:
+    marker = Marker()
+    marker.header.frame_id = "map"
+    marker.type = marker.CYLINDER
+    marker.ns = f"qd_{idx}"
+    marker.id = idx + 800000
+    marker.action = marker.ADD
+    marker.color = ColorRGBA(92 / 255, 179 / 255, 204 / 255, 0.05)  # 碧青
+    marker.scale = Vector3(0.5, 0.5, 1.0)
+    marker.pose.orientation.w = 1.0
 
     return marker
