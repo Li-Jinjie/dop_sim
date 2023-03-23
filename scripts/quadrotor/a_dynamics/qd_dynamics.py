@@ -20,11 +20,11 @@ from ..tools.ode import ODE
 from ..tools.saturate import saturate_w_float_limit
 
 
-def _update_wind_related_states(state: torch.Tensor, R: torch.Tensor):
+def _update_wind_related_states(state: torch.Tensor, r_mtx: torch.Tensor):
     V_wind_i = state[:, 28:31, :]
 
     # R: body to inertial  R.T: inertial to body
-    V_wind_b = R.transpose(1, 2) @ V_wind_i  # to the body frame
+    V_wind_b = r_mtx.transpose(1, 2) @ V_wind_i  # to the body frame
 
     # velocity vector relative to the airmass
     u_r = state[:, 16:17, :] - V_wind_b[:, 0:1, :]
@@ -45,10 +45,10 @@ def _update_wind_related_states(state: torch.Tensor, R: torch.Tensor):
     return state
 
 
-def _update_the_other_states(state: torch.Tensor, R: torch.Tensor):
+def _update_other_states(state: torch.Tensor, r_mtx: torch.Tensor):
     # update the class structure for the true state:
     phi, theta, psi = quaternion_2_euler(state[:, 9:13, :])
-    pdot = R @ state[:, 16:19, :]  # R: body to inertial
+    pdot = r_mtx @ state[:, 16:19, :]  # R: body to inertial
 
     state[:, 6:7, :] = phi
     state[:, 7:8, :] = theta
@@ -78,45 +78,26 @@ class QdDynamics(nn.Module):
         p, q, r, Va, Vg, alpha, beta, gamma, chi, wn, we, wd, xxx]
         input = [fx, fy, fz, l, m, n]
         """
-        # get forces and moments acting on rigid body
-        state, force_w_moment_b, R = self._update_forces_moments_and_wind_related_states(state, delta)
+        # get forces and torques acting on rigid body
+        state, forces_i_torques_b, r_mtx = self._update_forces_torques(state, delta)
 
-        state = self._update_dynamics_related_states(state, force_w_moment_b, dt)
+        state = self._update_dynamics(state, forces_i_torques_b, dt)
 
-        state = _update_the_other_states(state, R)
+        state = _update_other_states(state, r_mtx)
 
         return state
 
-    def _motor_thrust_torque(self, delta: torch.Tensor) -> torch.Tensor:
-        # delta = [o1, o2, o3, o4]
-        # thrust_torque = [thrust, torque_x, torque_y, torque_z]
-
-        # 对delta进行限幅
-        delta = saturate_w_float_limit(delta, low_limit=float(QMAV.o_min), up_limit=float(QMAV.o_max))
-
-        # ox的单位可以是转速, rad/s；也可以是RPM，只要与电机螺旋桨的拉力常数和扭矩常数单位对应上就可以。这里是kRPM
-        o1 = delta[:, 0:1, :]
-        o2 = delta[:, 1:2, :]
-        o3 = delta[:, 2:3, :]
-        o4 = delta[:, 3:4, :]
-
-        thrust_per_motor = QMAV.k_t * torch.cat((o1 ** 2, o2 ** 2, o3 ** 2, o4 ** 2), 1)
-
-        thrust_torque = self.G_1_torch @ thrust_per_motor
-
-        return thrust_torque
-
-    def _update_forces_moments_and_wind_related_states(self, state: torch.Tensor, delta: torch.Tensor):
-        """calculate forces and moments
+    def _update_forces_torques(self, state: torch.Tensor, delta: torch.Tensor):
+        """calculate forces and torques
         return the forces on the UAV based on the state, wind, and control surfaces
         :param delta = [o1, o2, o3, o4]
         state = [player, group, HP, north, east, down, phi, theta, psi, ew, ex, ey, ez, vx, vy, vz, u, v, w,
         p, q, r, Va, Vg, alpha, beta, gamma, chi, wn, we, xxx]
-        :return: Forces and Moments on the UAV [fx, fy, fz, l, m, n]
+        :return: Forces and Torques on the UAV [fx, fy, fz, l, m, n]
         """
 
         # compute propeller thrust and torque
-        thrust_torque = self._motor_thrust_torque(delta)
+        thrust_torque = self._motor_model(delta)
 
         f_c = thrust_torque[:, 0:1, :]
         tau_x = thrust_torque[:, 1:2, :]
@@ -124,19 +105,19 @@ class QdDynamics(nn.Module):
         tau_z = thrust_torque[:, 3:4, :]
 
         # ------- update_wind_related_states --------
-        R = quaternion_2_rotation(state[:, 9:13, :])  # R: body to inertial  R.T: inertial to body
+        r_mtx = quaternion_2_rotation(state[:, 9:13, :])  # r_mtx: body to inertial  r_mtx.T: inertial to body
 
         V_wind_i = state[:, 28:31, :]
 
-        # R: body to inertial  R.T: inertial to body
-        V_wind_b = R.transpose(1, 2) @ V_wind_i  # to the body frame
+        # r_mtx: body to inertial  r_mtx.T: inertial to body
+        V_wind_b = r_mtx.transpose(1, 2) @ V_wind_i  # to the body frame
 
         # velocity vector relative to the airmass
         u_r = state[:, 16:17, :] - V_wind_b[:, 0:1, :]
         v_r = state[:, 17:18, :] - V_wind_b[:, 1:2, :]
         w_r = state[:, 18:19, :] - V_wind_b[:, 2:3, :]
 
-        # # TODO: change these values from NED to ENU
+        # # TODO: check these values, from NED to ENU
         # compute airspeed
         Va = torch.sqrt(u_r ** 2 + v_r ** 2 + w_r ** 2)
         # compute angle of attack
@@ -155,16 +136,16 @@ class QdDynamics(nn.Module):
         fz = f_c + -QMAV.kd_z * w_r + QMAV.k_h * (u_r ** 2 + v_r ** 2)
 
         # transform forces from body frame to inertial frame
-        # R: body to inertial  R.T: inertial to body
-        f_i = R @ torch.cat((fx, fy, fz), 1)
+        # r_mtx: body to inertial  r_mtx.T: inertial to body
+        f_i = r_mtx @ torch.cat((fx, fy, fz), 1)
 
-        return state, torch.cat([f_i, tau_x, tau_y, tau_z], dim=1), R
+        return state, torch.cat([f_i, tau_x, tau_y, tau_z], dim=1), r_mtx
 
-    def _update_dynamics_related_states(self, state: torch.Tensor, force_w_moment_b: torch.Tensor, dt: float):
+    def _update_dynamics(self, state: torch.Tensor, forces_i_torques_b: torch.Tensor, dt: float):
         # ode_state = [east, north, up, vx, vy, vz, ew, ex, ey, ez, p, q, r]
         ode_state = torch.cat((state[:, 3:6, :], state[:, 13:16, :], state[:, 9:13, :], state[:, 19:22]), 1)
 
-        ode_state_new = self.ode_rigid_body(ode_state, force_w_moment_b, dt)
+        ode_state_new = self.ode_rigid_body(ode_state, forces_i_torques_b, dt)
 
         # normalize the quaternion
         ew = ode_state_new[:, 6:7, :]
@@ -181,6 +162,27 @@ class QdDynamics(nn.Module):
         state[:, 19:22] = ode_state_new[:, 10:13, :]  # p q r
 
         return state
+
+    def _motor_model(self, delta: torch.Tensor) -> torch.Tensor:
+        """quadratic motor model"""
+        # delta = [o1, o2, o3, o4]
+        # thrust_torque = [thrust, torque_x, torque_y, torque_z]
+
+        # 对delta进行限幅
+        delta = saturate_w_float_limit(delta, low_limit=float(QMAV.o_min), up_limit=float(QMAV.o_max))
+
+        # ox的单位可以是转速, rad/s；也可以是RPM，只要与电机螺旋桨的拉力常数和扭矩常数单位对应上就可以。这里是kRPM
+        o1 = delta[:, 0:1, :]
+        o2 = delta[:, 1:2, :]
+        o3 = delta[:, 2:3, :]
+        o4 = delta[:, 3:4, :]
+
+        thrust_per_motor = QMAV.k_t * torch.cat((o1 ** 2, o2 ** 2, o3 ** 2, o4 ** 2), 1)
+
+        thrust_torque = self.G_1_torch @ thrust_per_motor
+
+        return thrust_torque
+
 
 # # # Test Code
 # if __name__ == "__main__":
