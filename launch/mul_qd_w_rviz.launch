@@ -1,10 +1,10 @@
 <launch>
 
     <node pkg="dop_qd_sim" type="dop_qd_node.py" name="qd_sim" output="screen">
-        <rosparam command="load" file="mul_qd_config.yaml"/>
+        <rosparam command="load" file="$(find dop_qd_sim)/config/mul_qd_config.yaml"/>
     </node>
 
-<!--    <node pkg="rviz" type="rviz" name="rviz" args="-d $(find dop_qd_sim)/config/mul_qd_config.yaml" respawn="false" output="screen"/>-->
+<!--    <node pkg="rviz" type="rviz" name="rviz" args="-d $(find dop_qd_sim)/rviz/multi_qd.rviz" respawn="false" output="screen"/>-->
 <!--    <node pkg="plotjuggler" type="plotjuggler" name="plotjuggler" respawn="false" output="screen"/>-->
 
 </launch>

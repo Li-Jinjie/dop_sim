@@ -2,6 +2,8 @@ ts_sim: 0.02
 ts_ctl: 0.02
 ts_viz: 0.04
 
+# time_factor: 1.0  # only 1x simulation is supported now
+
 # ned frame
 qd_init_states:
   - - 0.0 # px
