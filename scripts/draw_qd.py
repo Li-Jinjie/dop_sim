@@ -14,9 +14,17 @@ import numpy as np
 
 def draw_mul_qd(num_agent: int) -> MarkerArray:
     marker_array = MarkerArray()
+
+    # first viz
     for i in range(num_agent):
         marker = draw_one_qd(i)
         marker_array.markers.append(marker)
+
+    # second text
+    for i in range(num_agent):
+        text = draw_one_text(i)
+        marker_array.markers.append(text)
+
     return marker_array
 
 
@@ -37,91 +45,69 @@ def draw_one_qd(idx: int) -> Marker:
     triangle_w = 4 * cm
 
     # points are in FLU coordinates
-    p0 = Point(triangle_l / 2, 0, 0)  # triangle on the body
-    p1 = Point(-triangle_l / 2, triangle_w / 2, 0)
-    p2 = Point(-triangle_l / 2, -triangle_w / 2, 0)
+    p = [Point()] * 41
+    p[0] = Point(triangle_l / 2, 0, 0)  # triangle on the body
+    p[1] = Point(-triangle_l / 2, triangle_w / 2, 0)
+    p[2] = Point(-triangle_l / 2, -triangle_w / 2, 0)
 
-    p3 = Point(motor_1[0], motor_1[1], 0)  # propeller 1
-    p4 = Point(motor_1[0] + prop_r * np.sin(pi / 4 * 0), motor_1[1] + prop_r * np.cos(pi / 4 * 0), 0)
-    p5 = Point(motor_1[0] + prop_r * np.sin(pi / 4 * 1), motor_1[1] + prop_r * np.cos(pi / 4 * 1), 0)
-    p6 = Point(motor_1[0] + prop_r * np.sin(pi / 4 * 2), motor_1[1] + prop_r * np.cos(pi / 4 * 2), 0)
-    p7 = Point(motor_1[0] + prop_r * np.sin(pi / 4 * 3), motor_1[1] + prop_r * np.cos(pi / 4 * 3), 0)
-    p8 = Point(motor_1[0] + prop_r * np.sin(pi / 4 * 4), motor_1[1] + prop_r * np.cos(pi / 4 * 4), 0)
-    p9 = Point(motor_1[0] + prop_r * np.sin(pi / 4 * 5), motor_1[1] + prop_r * np.cos(pi / 4 * 5), 0)
-    p10 = Point(motor_1[0] + prop_r * np.sin(pi / 4 * 6), motor_1[1] + prop_r * np.cos(pi / 4 * 6), 0)
-    p11 = Point(motor_1[0] + prop_r * np.sin(pi / 4 * 7), motor_1[1] + prop_r * np.cos(pi / 4 * 7), 0)
+    p[3] = Point(motor_1[0], motor_1[1], 0)  # propeller 1
+    for i in range(8):
+        p[4 + i] = Point(motor_1[0] + prop_r * np.sin(pi / 4 * i), motor_1[1] + prop_r * np.cos(pi / 4 * i), 0)
 
-    p12 = Point(motor_2[0], motor_2[1], 0)  # propeller 2
-    p13 = Point(motor_2[0] + prop_r * np.sin(pi / 4 * 0), motor_2[1] + prop_r * np.cos(pi / 4 * 0), 0)
-    p14 = Point(motor_2[0] + prop_r * np.sin(pi / 4 * 1), motor_2[1] + prop_r * np.cos(pi / 4 * 1), 0)
-    p15 = Point(motor_2[0] + prop_r * np.sin(pi / 4 * 2), motor_2[1] + prop_r * np.cos(pi / 4 * 2), 0)
-    p16 = Point(motor_2[0] + prop_r * np.sin(pi / 4 * 3), motor_2[1] + prop_r * np.cos(pi / 4 * 3), 0)
-    p17 = Point(motor_2[0] + prop_r * np.sin(pi / 4 * 4), motor_2[1] + prop_r * np.cos(pi / 4 * 4), 0)
-    p18 = Point(motor_2[0] + prop_r * np.sin(pi / 4 * 5), motor_2[1] + prop_r * np.cos(pi / 4 * 5), 0)
-    p19 = Point(motor_2[0] + prop_r * np.sin(pi / 4 * 6), motor_2[1] + prop_r * np.cos(pi / 4 * 6), 0)
-    p20 = Point(motor_2[0] + prop_r * np.sin(pi / 4 * 7), motor_2[1] + prop_r * np.cos(pi / 4 * 7), 0)
+    p[12] = Point(motor_2[0], motor_2[1], 0)  # propeller 2
+    for i in range(8):
+        p[13 + i] = Point(motor_2[0] + prop_r * np.sin(pi / 4 * i), motor_2[1] + prop_r * np.cos(pi / 4 * i), 0)
 
-    p21 = Point(motor_3[0], motor_3[1], 0)  # propeller 3
-    p22 = Point(motor_3[0] + prop_r * np.sin(pi / 4 * 0), motor_3[1] + prop_r * np.cos(pi / 4 * 0), 0)
-    p23 = Point(motor_3[0] + prop_r * np.sin(pi / 4 * 1), motor_3[1] + prop_r * np.cos(pi / 4 * 1), 0)
-    p24 = Point(motor_3[0] + prop_r * np.sin(pi / 4 * 2), motor_3[1] + prop_r * np.cos(pi / 4 * 2), 0)
-    p25 = Point(motor_3[0] + prop_r * np.sin(pi / 4 * 3), motor_3[1] + prop_r * np.cos(pi / 4 * 3), 0)
-    p26 = Point(motor_3[0] + prop_r * np.sin(pi / 4 * 4), motor_3[1] + prop_r * np.cos(pi / 4 * 4), 0)
-    p27 = Point(motor_3[0] + prop_r * np.sin(pi / 4 * 5), motor_3[1] + prop_r * np.cos(pi / 4 * 5), 0)
-    p28 = Point(motor_3[0] + prop_r * np.sin(pi / 4 * 6), motor_3[1] + prop_r * np.cos(pi / 4 * 6), 0)
-    p29 = Point(motor_3[0] + prop_r * np.sin(pi / 4 * 7), motor_3[1] + prop_r * np.cos(pi / 4 * 7), 0)
+    p[21] = Point(motor_3[0], motor_3[1], 0)  # propeller 3
+    for i in range(8):
+        p[22 + i] = Point(motor_3[0] + prop_r * np.sin(pi / 4 * i), motor_3[1] + prop_r * np.cos(pi / 4 * i), 0)
 
-    p30 = Point(motor_4[0], motor_4[1], 0)  # propeller 4
-    p31 = Point(motor_4[0] + prop_r * np.sin(pi / 4 * 0), motor_4[1] + prop_r * np.cos(pi / 4 * 0), 0)
-    p32 = Point(motor_4[0] + prop_r * np.sin(pi / 4 * 1), motor_4[1] + prop_r * np.cos(pi / 4 * 1), 0)
-    p33 = Point(motor_4[0] + prop_r * np.sin(pi / 4 * 2), motor_4[1] + prop_r * np.cos(pi / 4 * 2), 0)
-    p34 = Point(motor_4[0] + prop_r * np.sin(pi / 4 * 3), motor_4[1] + prop_r * np.cos(pi / 4 * 3), 0)
-    p35 = Point(motor_4[0] + prop_r * np.sin(pi / 4 * 4), motor_4[1] + prop_r * np.cos(pi / 4 * 4), 0)
-    p36 = Point(motor_4[0] + prop_r * np.sin(pi / 4 * 5), motor_4[1] + prop_r * np.cos(pi / 4 * 5), 0)
-    p37 = Point(motor_4[0] + prop_r * np.sin(pi / 4 * 6), motor_4[1] + prop_r * np.cos(pi / 4 * 6), 0)
-    p38 = Point(motor_4[0] + prop_r * np.sin(pi / 4 * 7), motor_4[1] + prop_r * np.cos(pi / 4 * 7), 0)
+    p[30] = Point(motor_4[0], motor_4[1], 0)  # propeller 4
+    for i in range(8):
+        p[31 + i] = Point(motor_4[0] + prop_r * np.sin(pi / 4 * i), motor_4[1] + prop_r * np.cos(pi / 4 * i), 0)
 
-    p39 = Point(0, 0, 0)
-    p40 = Point(0, 0, -h)
+    # frame
+    p[39] = Point(0, 0, 0)
+    p[40] = Point(0, 0, -h)
 
     # fmt: off
-    points = [  p0, p1, p2, # triangle body
-                p3, p4, p5, # propeller 1, portion 1
-                p3, p5, p6, # 2
-                p3, p6, p7, # 3
-                p3, p7, p8, # 4
-                p3, p8, p9, # 5
-                p3, p9, p10, # 6
-                p3, p10, p11, # 7
-                p3, p11, p4, # 8
-                p12, p13, p14, # propeller 2, portion 1
-                p12, p14, p15, # 2
-                p12, p15, p16, # 3
-                p12, p16, p17, # 4
-                p12, p17, p18, # 5
-                p12, p18, p19, # 6
-                p12, p19, p20, # 7
-                p12, p20, p13, # 8
-                p21, p22, p23, # propeller 3, portion 1
-                p21, p23, p24, # 2
-                p21, p24, p25, # 3
-                p21, p25, p26, # 4
-                p21, p26, p27, # 5
-                p21, p27, p28, # 6
-                p21, p28, p29, # 7
-                p21, p29, p22, # 8
-                p30, p31, p32, # propeller 4, portion 1
-                p30, p32, p33, # 2
-                p30, p33, p34, # 3
-                p30, p34, p35, # 4
-                p30, p35, p36, # 5
-                p30, p36, p37, # 6
-                p30, p37, p38, # 7
-                p30, p38, p31, # 8
-                p39, p40, p3, # frame
-                p39, p40, p12, # frame
-                p39, p40, p21, # frame
-                p39, p40, p30] # frame
+    points = [  p[0], p[1], p[2], # triangle body
+                p[3], p[4], p[5], # propeller 1, portion 1
+                p[3], p[5], p[6], # 2
+                p[3], p[6], p[7], # 3
+                p[3], p[7], p[8], # 4
+                p[3], p[8], p[9], # 5
+                p[3], p[9], p[10], # 6
+                p[3], p[10], p[11], # 7
+                p[3], p[11], p[4], # 8
+                p[12], p[13], p[14], # propeller 2, portion 1
+                p[12], p[14], p[15], # 2
+                p[12], p[15], p[16], # 3
+                p[12], p[16], p[17], # 4
+                p[12], p[17], p[18], # 5
+                p[12], p[18], p[19], # 6
+                p[12], p[19], p[20], # 7
+                p[12], p[20], p[13], # 8
+                p[21], p[22], p[23], # propeller 3, portion 1
+                p[21], p[23], p[24], # 2
+                p[21], p[24], p[25], # 3
+                p[21], p[25], p[26], # 4
+                p[21], p[26], p[27], # 5
+                p[21], p[27], p[28], # 6
+                p[21], p[28], p[29], # 7
+                p[21], p[29], p[22], # 8
+                p[30], p[31], p[32], # propeller 4, portion 1
+                p[30], p[32], p[33], # 2
+                p[30], p[33], p[34], # 3
+                p[30], p[34], p[35], # 4
+                p[30], p[35], p[36], # 5
+                p[30], p[36], p[37], # 6
+                p[30], p[37], p[38], # 7]
+                p[30], p[38], p[31], # 8
+                p[39], p[40], p[3], # frame
+                p[39], p[40], p[12], # frame
+                p[39], p[40], p[21], # frame
+                p[39], p[40], p[30]] # frame
     # fmt: on
 
     assert len(points) % 3 == 0, "points must be a multiple of 3"
@@ -154,5 +140,21 @@ def draw_one_qd(idx: int) -> Marker:
     return marker
 
 
-if __name__ == "__main__":
-    marker_array = draw_mul_qd(3)
+def draw_one_text(idx: int) -> Marker:
+    marker = Marker()
+    marker.header.frame_id = "map"
+    marker.type = marker.TEXT_VIEW_FACING
+    marker.ns = f"qd_{idx}"
+    marker.id = idx + 900000
+    marker.action = marker.ADD
+    marker.color = ColorRGBA(
+        1.0, 0.39, 0.28, 1.0
+    )  # must be set greater than 0 to be visible. This alpha is for the whole body.
+    marker.text = f"qd_{idx}"
+    marker.scale.z = 0.1
+    marker.pose.orientation.w = 1.0
+    marker.pose.position.x = 0
+    marker.pose.position.y = 0
+    marker.pose.position.z = 0
+
+    return marker

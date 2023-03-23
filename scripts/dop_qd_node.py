@@ -6,6 +6,7 @@ File: dop_qd_node.py
 Date: 2023/3/21 下午3:58
 Description: 
 """
+import copy
 import sys
 import time
 from os.path import expanduser
@@ -42,8 +43,9 @@ class DopQdNode:
         )
 
         # visualization
-        self.mul_qd_marker_array = draw_mul_qd(self.num_agent)
+        self.mul_qd_text_marker_array = draw_mul_qd(self.num_agent)  # first viz, then text
         self.marker_array_pub = rospy.Publisher("mul_qds_viz", MarkerArray, queue_size=5)
+
         self.viz_time = rospy.Time.now()  # the time of the last visualization
         self._pub_viz(self.init_ego_states, is_first=True)
 
@@ -106,23 +108,36 @@ class DopQdNode:
     def _pub_viz(self, ego_states: torch.Tensor, is_first=False) -> None:
         rospy.loginfo("Publish points for one round!")
 
-        for i, marker in enumerate(self.mul_qd_marker_array.markers):
+        # viz
+        for i in range(self.num_agent):
+            # viz
+            viz_marker = self.mul_qd_text_marker_array.markers[i]
 
-            marker.header.stamp = rospy.Time.now()
+            viz_marker.header.stamp = rospy.Time.now()
             if is_first:
-                marker.action = marker.ADD
+                viz_marker.action = viz_marker.ADD
             else:
-                marker.action = marker.MODIFY
+                viz_marker.action = viz_marker.MODIFY
 
-            marker.pose.position.x = ego_states[i][4][0]  # e
-            marker.pose.position.y = ego_states[i][3][0]  # n
-            marker.pose.position.z = -ego_states[i][5][0]  # u
-            marker.pose.orientation.w = ego_states[i][9][0]  # ew
-            marker.pose.orientation.x = ego_states[i][10][0]  # ex
-            marker.pose.orientation.y = ego_states[i][11][0]  # ey
-            marker.pose.orientation.z = ego_states[i][12][0]  # ez
+            viz_marker.pose.position.x = ego_states[i][4][0]  # e
+            viz_marker.pose.position.y = ego_states[i][3][0]  # n
+            viz_marker.pose.position.z = -ego_states[i][5][0]  # u
+            viz_marker.pose.orientation.w = ego_states[i][9][0]  # ew
+            viz_marker.pose.orientation.x = ego_states[i][10][0]  # ex
+            viz_marker.pose.orientation.y = ego_states[i][11][0]  # ey
+            viz_marker.pose.orientation.z = ego_states[i][12][0]  # ez
 
-        self.marker_array_pub.publish(self.mul_qd_marker_array)
+            # text
+            text_marker = self.mul_qd_text_marker_array.markers[i + self.num_agent]
+            text_marker.header.stamp = rospy.Time.now()
+            if is_first:
+                text_marker.action = text_marker.ADD
+            else:
+                text_marker.action = text_marker.MODIFY
+            text_marker.pose = copy.deepcopy(viz_marker.pose)
+            text_marker.pose.position.z += 0.1  # bias for text
+
+        self.marker_array_pub.publish(self.mul_qd_text_marker_array)
 
 
 if __name__ == "__main__":
