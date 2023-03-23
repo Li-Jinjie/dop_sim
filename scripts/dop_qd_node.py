@@ -18,8 +18,6 @@ sys.path.append(home + "/ljj_ws/src/dop_qd_sim/scripts")
 
 import rospy
 import torch
-from std_msgs.msg import ColorRGBA
-from geometry_msgs.msg import PoseStamped, Point
 from visualization_msgs.msg import MarkerArray, Marker
 from quadrotor import MulQuadrotors
 from draw_qd import draw_mul_qd
@@ -53,6 +51,9 @@ class DopQdNode:
         self.rate = rospy.Rate(1 / self.ts_sim)
         self.model = self._load_model()  # Load PyTorch model
 
+        # timer for various frequencies
+        self.time_guarder = TimeGuarder(ts_sim=self.ts_sim, ts_measure=5)
+
     def run(self) -> None:
         """
         ego_states: [player, group, HP, east, north, up, phi, theta, psi, ew, ex, ey, ez, vx, vy, vz, u, v, w,
@@ -64,22 +65,25 @@ class DopQdNode:
         body_rate_cmd = torch.zeros([self.num_agent, 4, 1], dtype=torch.float64).to("cuda")
         body_rate_cmd[:, 3, 0] = 0.235  # throttle_cmd
 
-        body_rate_cmd[0, 0, 0] = 0.1 # roll_rate_cmd
-        body_rate_cmd[1, 1, 0] = 0.1 # pitch_rate_cmd
-        body_rate_cmd[2, 2, 0] = 0.1 # yaw_rate_cmd
+        body_rate_cmd[0, 0, 0] = 0.1  # roll_rate_cmd
+        body_rate_cmd[1, 1, 0] = 0.1  # pitch_rate_cmd
+        body_rate_cmd[2, 2, 0] = 0.1  # yaw_rate_cmd
 
         rospy.loginfo("Start simulation!")
 
         while not rospy.is_shutdown():
-            # time_a = time.perf_counter()
+            time_a = time.perf_counter()
 
+            # low_level controller and dynamics
             ego_states = self._run_model(ego_states, body_rate_cmd)
 
+            # visualization
             if (rospy.Time.now() - self.viz_time).to_sec() > self.ts_viz:
                 self._pub_viz(ego_states)
                 self.viz_time = rospy.Time.now()
 
-            # time_b = time.perf_counter()
+            time_b = time.perf_counter()
+            self.time_guarder.measure_run_t(time_b - time_a)
 
             self.rate.sleep()
 
@@ -142,6 +146,32 @@ class DopQdNode:
             text_marker.pose.position.z += 0.1  # bias for text
 
         self.marker_array_pub.publish(self.mul_qd_text_marker_array)
+
+
+class TimeGuarder:
+    def __init__(self, ts_sim: float, ts_measure: float = 1):
+        self.measure_round = ts_measure / ts_sim
+        self.ts_sim = ts_sim
+
+        self.run_round = 0
+        self.run_t = 0.0
+        self.clear_run_t()
+
+    def clear_run_t(self):
+        self.run_round = 0
+        self.run_t = 0.0
+
+    def measure_run_t(self, t_one_round: float):
+        self.run_t += t_one_round
+        self.run_round += 1
+        if self.run_round == self.measure_round:
+            rospy.loginfo(
+                f"Average running time for {self.measure_round} rounds: {self.run_t / self.measure_round * 1000:.3f} ms \n"
+                f"time step for simulation is {self.ts_sim * 1000:.3f} ms \n"
+                f"real time simulation is {self.ts_sim > self.run_t / self.measure_round} !"
+            )
+            print("One round time: {:.3f} ms".format(self.run_t / self.measure_round * 1000))
+            self.clear_run_t()
 
 
 if __name__ == "__main__":
