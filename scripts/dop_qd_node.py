@@ -21,10 +21,11 @@ from std_msgs.msg import ColorRGBA
 from geometry_msgs.msg import PoseStamped, Point
 from visualization_msgs.msg import MarkerArray, Marker
 from quadrotor import MulQuadrotors
+from draw_qd import draw_mul_qd
 
 
 class DopQdNode:
-    def __init__(self):
+    def __init__(self) -> None:
         rospy.init_node("dop_qd_node", anonymous=False)
 
         # params
@@ -41,6 +42,7 @@ class DopQdNode:
         )
 
         # visualization
+        self.mul_qd_marker_array = draw_mul_qd(self.num_agent)
         self.marker_array_pub = rospy.Publisher("mul_qds_viz", MarkerArray, queue_size=5)
         self.viz_time = rospy.Time.now()  # the time of the last visualization
         self._pub_viz(self.init_ego_states, is_first=True)
@@ -49,7 +51,7 @@ class DopQdNode:
         self.rate = rospy.Rate(1 / self.ts_sim)
         self.model = self._load_model()  # Load PyTorch model
 
-    def run(self):
+    def run(self) -> None:
         """
         ego_states: [player, group, HP, north, east, down, phi, theta, psi, ew, ex, ey, ez, vx, vy, vz, u, v, w,
                  p, q, r, Va, Vg, alpha, beta, gamma, chi, wn, we, wd]   len=31
@@ -86,7 +88,7 @@ class DopQdNode:
 
         return ego_states
 
-    def _load_model(self)-> torch.jit.ScriptModule:
+    def _load_model(self) -> torch.jit.ScriptModule:
         # Load PyTorch model here
         mul_qd = MulQuadrotors(self.num_agent, self.ts_sim, torch.float64).requires_grad_(False)
         if torch.cuda.is_available():
@@ -96,45 +98,21 @@ class DopQdNode:
         rospy.loginfo("Load model successfully!")
         return sm_mul_qd
 
-    def _run_model(self, ego_states: torch.Tensor, body_rate_cmd: torch.Tensor)-> torch.Tensor:
+    def _run_model(self, ego_states: torch.Tensor, body_rate_cmd: torch.Tensor) -> torch.Tensor:
         # Run PyTorch model and get output tensor
         output_tensor = self.model(ego_states, body_rate_cmd, self.ts_sim)
         return output_tensor
 
-    def _pub_viz(self, ego_states: torch.Tensor, is_first=False)-> None:
+    def _pub_viz(self, ego_states: torch.Tensor, is_first=False) -> None:
         rospy.loginfo("Publish points for one round!")
 
-        marker_array = MarkerArray()
+        for i, marker in enumerate(self.mul_qd_marker_array.markers):
 
-        for i in range(self.num_agent):
-            marker = Marker()
-            marker.header.frame_id = "map"
             marker.header.stamp = rospy.Time.now()
-            marker.type = marker.TRIANGLE_LIST
-            marker.ns = f"qd_{i}"
-            marker.id = i
-
             if is_first:
                 marker.action = marker.ADD
             else:
                 marker.action = marker.MODIFY
-
-            marker.color.a = 1.0  # must be set greater than 0 to be visible. This alpha is for the whole body.
-
-            marker.scale.x = 1.0
-            marker.scale.y = 1.0
-            marker.scale.z = 1.0
-
-            p1 = Point(3, 1, 0)
-            p2 = Point(1, 0, 0)
-            p3 = Point(0, 1, 0)
-
-            p4 = Point(1, 3, 0)
-            p5 = Point(0, 1, 0)
-            p6 = Point(1, 0, 0)
-
-            marker.points = [p1, p2, p3, p4, p5, p6]
-            marker.colors = [ColorRGBA(1.0, 0.5, 0.5, 1.0), ColorRGBA(1.0, 0.5, 0.5, 1.0)]
 
             marker.pose.position.x = ego_states[i][4][0]  # e
             marker.pose.position.y = ego_states[i][3][0]  # n
@@ -144,9 +122,7 @@ class DopQdNode:
             marker.pose.orientation.y = ego_states[i][11][0]  # ey
             marker.pose.orientation.z = ego_states[i][12][0]  # ez
 
-            marker_array.markers.append(marker)
-
-        self.marker_array_pub.publish(marker_array)
+        self.marker_array_pub.publish(self.mul_qd_marker_array)
 
 
 if __name__ == "__main__":
