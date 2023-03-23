@@ -5,12 +5,12 @@ from . import physical_param as MAV
 
 mass = MAV.mass
 gravity = MAV.gravity  # gravity constant
-sigma = 0.05  # low pass filter gain for derivative
+sigma = 0.05  # low pass filter gain for derivative in PID
 
-collective_f_max = MAV.collective_f_max
+fc_max = MAV.fc_max
 
-l_s_beta = MAV.l_s_beta
-l_c_beta = MAV.l_c_beta
+l_s_alpha = MAV.l_s_alpha
+l_c_alpha = MAV.l_c_alpha
 k_t = MAV.k_t
 k_q = MAV.k_q
 
@@ -94,5 +94,5 @@ yaw_rate_ki = 0.01
 yaw_rate_kd = 0.005
 
 # ---------- power distribution -------------
-# formulation: kt * [o1, o2, o3, o4]^T = G_1_T * [trust, tau_x, tau_y, tau_z]^T
-G_1_T = MAV.G_1.T
+# formulation: kt * [o1, o2, o3, o4]^T = G_1_inv * [trust, tau_x, tau_y, tau_z]^T
+G_1_inv = np.linalg.inv(MAV.G_1)  # TODO: get the analytical solution of G_1

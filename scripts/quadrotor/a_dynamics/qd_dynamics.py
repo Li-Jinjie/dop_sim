@@ -94,7 +94,7 @@ class QdDynamics(nn.Module):
         # 对delta进行限幅
         delta = saturate_w_float_limit(delta, low_limit=float(QMAV.o_min), up_limit=float(QMAV.o_max))
 
-        # ox的单位可以是转速, rad/s；也可以是RPM/s，只要与电机螺旋桨的拉力常数和扭矩常数单位对应上就可以。
+        # ox的单位可以是转速, rad/s；也可以是RPM，只要与电机螺旋桨的拉力常数和扭矩常数单位对应上就可以。这里是kRPM
         o1 = delta[:, 0:1, :]
         o2 = delta[:, 1:2, :]
         o3 = delta[:, 2:3, :]
@@ -118,10 +118,10 @@ class QdDynamics(nn.Module):
         # compute propeller thrust and torque
         thrust_torque = self._motor_thrust_torque(delta)
 
-        T = thrust_torque[:, 0:1, :]
-        Mx = thrust_torque[:, 1:2, :]
-        My = thrust_torque[:, 2:3, :]
-        Mz = thrust_torque[:, 3:4, :]
+        f_c = thrust_torque[:, 0:1, :]
+        tau_x = thrust_torque[:, 1:2, :]
+        tau_y = thrust_torque[:, 2:3, :]
+        tau_z = thrust_torque[:, 3:4, :]
 
         # ------- update_wind_related_states --------
         R = quaternion_2_rotation(state[:, 9:13, :])  # R: body to inertial  R.T: inertial to body
@@ -136,6 +136,7 @@ class QdDynamics(nn.Module):
         v_r = state[:, 17:18, :] - V_wind_b[:, 1:2, :]
         w_r = state[:, 18:19, :] - V_wind_b[:, 2:3, :]
 
+        # # TODO: change these values from NED to ENU
         # compute airspeed
         Va = torch.sqrt(u_r ** 2 + v_r ** 2 + w_r ** 2)
         # compute angle of attack
@@ -151,16 +152,16 @@ class QdDynamics(nn.Module):
 
         fx = 0 + -QMAV.kd_x * u_r
         fy = 0 + -QMAV.kd_y * v_r
-        fz = -T + -QMAV.kd_z * w_r + QMAV.k_h * (u_r ** 2 + v_r ** 2)
+        fz = f_c + -QMAV.kd_z * w_r + QMAV.k_h * (u_r ** 2 + v_r ** 2)
 
         # transform forces from body frame to inertial frame
         # R: body to inertial  R.T: inertial to body
         f_i = R @ torch.cat((fx, fy, fz), 1)
 
-        return state, torch.cat([f_i, Mx, My, Mz], dim=1), R
+        return state, torch.cat([f_i, tau_x, tau_y, tau_z], dim=1), R
 
     def _update_dynamics_related_states(self, state: torch.Tensor, force_w_moment_b: torch.Tensor, dt: float):
-        # ode_state = [north, east, down, vx, vy, vz, ew, ex, ey, ez, p, q, r]
+        # ode_state = [east, north, up, vx, vy, vz, ew, ex, ey, ez, p, q, r]
         ode_state = torch.cat((state[:, 3:6, :], state[:, 13:16, :], state[:, 9:13, :], state[:, 19:22]), 1)
 
         ode_state_new = self.ode_rigid_body(ode_state, force_w_moment_b, dt)

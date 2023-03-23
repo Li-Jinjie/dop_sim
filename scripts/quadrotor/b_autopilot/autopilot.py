@@ -22,7 +22,7 @@ from .pd_control import PDControl
 class Autopilot(nn.Module):
     def __init__(self, num_agent: int, ts_control: float, dtype=torch.float64) -> None:
         super().__init__()
-        self.G_1_T_torch = nn.Parameter(torch.tensor(AP.G_1_T), False)
+        self.G_1_T_torch = nn.Parameter(torch.tensor(AP.G_1_inv), False)
 
         ts_factor = ts_control / 0.02  # 确保pid参数会随着仿真步长的改变而改变
 
@@ -155,7 +155,7 @@ class Autopilot(nn.Module):
         """autopilot 更新
 
         Args:
-            ego_states: [player, group, HP, north, east, down, phi, theta, psi, ew, ex, ey, ez, vx, vy, vz, u, v, w,
+            ego_states: [player, group, HP, east, north, up, phi, theta, psi, ew, ex, ey, ez, vx, vy, vz, u, v, w,
              p, q, r, Va, Vg, alpha, beta, gamma, chi, wn, we, xxx]
             cmd: ["airspeed_command", "course_command", "altitude_command", "phi_feedforward"]
 

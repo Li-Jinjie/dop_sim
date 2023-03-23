@@ -18,7 +18,7 @@ from .pid_control import PIDControl
 class AtpRate(nn.Module):
     def __init__(self, num_agent: int, ts_control: float, dtype=torch.float64) -> None:
         super().__init__()
-        self.G_1_T_torch = nn.Parameter(torch.tensor(AP.G_1_T), False)
+        self.G_1_inv_torch = nn.Parameter(torch.tensor(AP.G_1_inv), False)
 
         ts_factor = ts_control / 0.02  # 确保pid参数会随着仿真步长的改变而改变
 
@@ -60,7 +60,7 @@ class AtpRate(nn.Module):
         """autopilot 更新
 
         Args:
-            ego_states: [player, group, HP, north, east, down, phi, theta, psi, ew, ex, ey, ez, vx, vy, vz, u, v, w,
+            ego_states: [player, group, HP, east, north, up, phi, theta, psi, ew, ex, ey, ez, vx, vy, vz, u, v, w,
              p, q, r, Va, Vg, alpha, beta, gamma, chi, wn, we, xxx]
             cmd: ["roll_rate_cmd", "pitch_rate_cmd", "yaw_rate_cmd", "throttle_cmd"]
 
@@ -68,22 +68,22 @@ class AtpRate(nn.Module):
             Note that throttle_cmd is a [0, 1] normalized float value.
 
         Returns:
-            cmd: [o1, o2, o3, o4], RPM
+            cmd: [o1, o2, o3, o4], kRPM
         """
         roll_rate_cmd = cmd[:, 0:1, :]
         pitch_rate_cmd = cmd[:, 1:2, :]
         yaw_rate_cmd = cmd[:, 2:3, :]
         throttle_cmd = cmd[:, 3:4, :]
 
-        vx = ego_states[:, 13:14, :]
-        vy = ego_states[:, 14:15, :]
-        vz = ego_states[:, 15:16, :]
+        # vx = ego_states[:, 13:14, :]
+        # vy = ego_states[:, 14:15, :]
+        # vz = ego_states[:, 15:16, :]
 
         # chi = ego_states[:, 27:28, :]
 
-        phi = ego_states[:, 6:7, :]
-        theta = ego_states[:, 7:8, :]
-        psi = ego_states[:, 8:9, :]
+        # phi = ego_states[:, 6:7, :]
+        # theta = ego_states[:, 7:8, :]
+        # psi = ego_states[:, 8:9, :]
 
         p = ego_states[:, 19:20, :]
         q = ego_states[:, 20:21, :]
@@ -93,7 +93,7 @@ class AtpRate(nn.Module):
         # Va = ego_states[:, 22:23, :]
 
         # vertical
-        thrust_cmd = throttle_cmd * AP.collective_f_max
+        thrust_cmd = throttle_cmd * AP.fc_max
 
         # ------- attitude_rate_loop --------
         torque_x_cmd = self.Mx_from_roll_rate(roll_rate_cmd, p)
@@ -103,12 +103,12 @@ class AtpRate(nn.Module):
         # ------- power_distribution -------
         thrust_cmd[thrust_cmd < 0] = 0
 
-        thrust_per_motor = self.G_1_T_torch @ torch.cat((thrust_cmd, torque_x_cmd, torque_y_cmd, torque_z_cmd), 1)
+        thrust_per_motor = self.G_1_inv_torch @ torch.cat((thrust_cmd, torque_x_cmd, torque_y_cmd, torque_z_cmd), 1)
         # force:N, torque:Nm
 
-        # thrust_per_motor = ct * omega ** 2
         thrust_per_motor[thrust_per_motor < 0] = 0
 
+        # thrust_per_motor = ct * omega ** 2
         delta = torch.sqrt(thrust_per_motor / AP.k_t)
 
         return delta

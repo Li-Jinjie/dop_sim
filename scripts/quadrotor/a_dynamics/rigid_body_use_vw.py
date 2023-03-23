@@ -32,14 +32,14 @@ class RigidBodyUseVw(nn.Module):
     def forward(self, state: torch.Tensor, force_w_torque_b: torch.Tensor):
         """
         for the a_dynamics xdot = f(x, u), returns f(x, u)
-        state = [north, east, down, vx, vy, vz, ew, ex, ey, ez, p, q, r]
+        state = [east, north, up, vx, vy, vz, ew, ex, ey, ez, p, q, r]
         input = [fx, fy, fz, l, m, n]
         """
 
         # extract the states
-        # north = state[:, 0:1, :]
-        # east = state[:, 1:2, :]
-        # down = state[:, 2:3, :]
+        # east = state[:, 0:1, :]
+        # north = state[:, 1:2, :]
+        # up = state[:, 2:3, :]
 
         # vx, vy, vz, ew, ex, ey, ez, p, q, r = fork_tensor(state, [16, 17, 18, 9, 10, 11, 12, 19, 20, 21])
         # 注，这里必须写成这种固定长度的才能够jit加速
@@ -66,14 +66,14 @@ class RigidBodyUseVw(nn.Module):
         n = force_w_torque_b[:, 5:6, :]
 
         # position kinematics, in the inertial coordination
-        north_dot = vx
-        east_dot = vy
-        down_dot = vz
+        east_dot = vx
+        north_dot = vy
+        up_dot = vz
 
         # position dynamics, velocity, f_i is in inertial coordination
         vx_dot = fx_i / QMAV.mass
         vy_dot = fy_i / QMAV.mass
-        vz_dot = fz_i / QMAV.mass + QMAV.gravity
+        vz_dot = fz_i / QMAV.mass - QMAV.gravity  # ENU
 
         # rotational kinematics
         ew_dot = (0 - p * ex - q * ey - r * ez) / 2
@@ -89,9 +89,9 @@ class RigidBodyUseVw(nn.Module):
         # collect the derivative of the states
         state_dot = torch.cat(
             (
-                north_dot,
                 east_dot,
-                down_dot,
+                north_dot,
+                up_dot,
                 vx_dot,
                 vy_dot,
                 vz_dot,
