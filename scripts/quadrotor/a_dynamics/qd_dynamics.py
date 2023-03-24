@@ -32,7 +32,7 @@ def _update_wind_related_states(state: torch.Tensor, r_mtx: torch.Tensor):
     w_r = state[:, 18:19, :] - V_wind_b[:, 2:3, :]
 
     # compute airspeed
-    Va = torch.sqrt(u_r ** 2 + v_r ** 2 + w_r ** 2)
+    Va = torch.sqrt(u_r**2 + v_r**2 + w_r**2)
     # compute angle of attack
     alpha = (u_r == 0) * math.pi / 2 + (u_r != 0) * torch.atan2(w_r, u_r)
     # compute sideslip angle
@@ -119,7 +119,7 @@ class QdDynamics(nn.Module):
 
         # # TODO: check these values, from NED to ENU
         # compute airspeed
-        Va = torch.sqrt(u_r ** 2 + v_r ** 2 + w_r ** 2)
+        Va = torch.sqrt(u_r**2 + v_r**2 + w_r**2)
         # compute angle of attack
         alpha = (u_r == 0) * math.pi / 2 + (u_r != 0) * torch.atan2(w_r, u_r)
         # compute sideslip angle
@@ -133,7 +133,7 @@ class QdDynamics(nn.Module):
 
         fx = 0 + -QMAV.kd_x * u_r
         fy = 0 + -QMAV.kd_y * v_r
-        fz = f_c + -QMAV.kd_z * w_r + QMAV.k_h * (u_r ** 2 + v_r ** 2)
+        fz = f_c + -QMAV.kd_z * w_r + QMAV.k_h * (u_r**2 + v_r**2)
 
         # transform forces from body frame to inertial frame
         # r_mtx: body to inertial  r_mtx.T: inertial to body
@@ -152,7 +152,7 @@ class QdDynamics(nn.Module):
         ex = ode_state_new[:, 7:8, :]
         ey = ode_state_new[:, 8:9, :]
         ez = ode_state_new[:, 9:10, :]
-        normE = torch.sqrt(ew ** 2.0 + ex ** 2.0 + ey ** 2.0 + ez ** 2.0)
+        normE = torch.sqrt(ew**2.0 + ex**2.0 + ey**2.0 + ez**2.0)
         ode_state_new[:, 6:10, :] = ode_state_new[:, 6:10, :] / normE
 
         # put the ode_state into state
@@ -177,7 +177,7 @@ class QdDynamics(nn.Module):
         o3 = delta[:, 2:3, :]
         o4 = delta[:, 3:4, :]
 
-        thrust_per_motor = QMAV.k_t * torch.cat((o1 ** 2, o2 ** 2, o3 ** 2, o4 ** 2), 1)
+        thrust_per_motor = QMAV.k_t * torch.cat((o1**2, o2**2, o3**2, o4**2), 1)
 
         thrust_torque = self.G_1_torch @ thrust_per_motor
 

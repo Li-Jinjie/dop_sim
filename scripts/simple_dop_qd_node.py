@@ -4,7 +4,7 @@
 Author: LI Jinjie
 File: dop_qd_node.py
 Date: 2023/3/21 下午3:58
-Description: 
+Description:
 """
 import copy
 import sys
@@ -64,9 +64,9 @@ class DopQdNode:
         body_rate_cmd = torch.zeros([self.num_agent, 4, 1], dtype=torch.float64).to("cuda")
         body_rate_cmd[:, 3, 0] = 0.235  # throttle_cmd
 
-        body_rate_cmd[0, 0, 0] = 0.1 # roll_rate_cmd
-        body_rate_cmd[1, 1, 0] = 0.1 # pitch_rate_cmd
-        body_rate_cmd[2, 2, 0] = 0.1 # yaw_rate_cmd
+        body_rate_cmd[0, 0, 0] = 0.1  # roll_rate_cmd
+        body_rate_cmd[1, 1, 0] = 0.1  # pitch_rate_cmd
+        body_rate_cmd[2, 2, 0] = 0.1  # yaw_rate_cmd
 
         rospy.loginfo("Start simulation!")
 

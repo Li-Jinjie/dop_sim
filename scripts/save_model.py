@@ -28,4 +28,3 @@ if __name__ == "__main__":
     # save model
     sm_mul_qd.save("../models/mul_qd_model.pt")
     print("Model saves successfully!")
-

@@ -83,7 +83,7 @@ class RigidBodyUseVw(nn.Module):
 
         # rotational dynamics, (l,m,n) is in body coordination
         p_dot = QMAV.gamma1 * p * q - QMAV.gamma2 * q * r + QMAV.gamma3 * l + QMAV.gamma4 * n
-        q_dot = QMAV.gamma5 * p * r - QMAV.gamma6 * (p ** 2 - r ** 2) + m / QMAV.Iyy
+        q_dot = QMAV.gamma5 * p * r - QMAV.gamma6 * (p**2 - r**2) + m / QMAV.Iyy
         r_dot = QMAV.gamma7 * p * q - QMAV.gamma1 * q * r + QMAV.gamma4 * l + QMAV.gamma8 * n
 
         # collect the derivative of the states

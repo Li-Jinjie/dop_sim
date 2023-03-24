@@ -23,7 +23,7 @@ o20 = 4000 / 1000  # kRPM
 o30 = 4000 / 1000  # kRPM
 o40 = 4000 / 1000  # kRPM
 
-Va0 = np.sqrt(vx0 ** 2 + vy0 ** 2 + vz0 ** 2)
+Va0 = np.sqrt(vx0**2 + vy0**2 + vz0**2)
 #   Quaternion State
 q = euler_2_quaternion_one(phi0, theta0, psi0)
 qw0 = q.item(0)
@@ -64,9 +64,9 @@ o_min = 2600 / 1000  # kRPM
 k_q = 3.7611e-10 * 1e6  # Nm/kRPM^2
 k_t = 2.8158e-08 * 1e6  # N/kRPM^2
 
-Tm = 0.0760  # time constant of motor  # 这个参数参考《多旋翼飞行器设计与控制》 全权
+fc_max = 4.0 * k_t * (o_max**2)  # N
 
-fc_max = 4.0 * k_t * (o_max ** 2)  # N
+Tm = 0.0760  # time constant of motor  # 这个参数参考《多旋翼飞行器设计与控制》 全权
 
 ######################################################################################
 #   Calculation Variables
@@ -86,12 +86,12 @@ G_1 = np.array(
 )
 
 #   gamma parameters pulled from page 36 (dynamics)
-gamma = Ixx * Izz - (Ixz ** 2)
+gamma = Ixx * Izz - (Ixz**2)
 gamma1 = (Ixz * (Ixx - Iyy + Izz)) / gamma
-gamma2 = (Izz * (Izz - Iyy) + (Ixz ** 2)) / gamma
+gamma2 = (Izz * (Izz - Iyy) + (Ixz**2)) / gamma
 gamma3 = Izz / gamma
 gamma4 = Ixz / gamma
 gamma5 = (Izz - Ixx) / Iyy
 gamma6 = Ixz / Iyy
-gamma7 = ((Ixx - Iyy) * Ixx + (Ixz ** 2)) / gamma
+gamma7 = ((Ixx - Iyy) * Ixx + (Ixz**2)) / gamma
 gamma8 = Ixx / gamma
