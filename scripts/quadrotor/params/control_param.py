@@ -9,8 +9,9 @@ sigma = 0.05  # low pass filter gain for derivative in PID
 
 fc_max = MAV.fc_max
 
-l_s_alpha = MAV.l_s_alpha
-l_c_alpha = MAV.l_c_alpha
+alpha = MAV.alpha_frame
+l_frame = MAV.l_frame
+
 k_t = MAV.k_t
 k_q = MAV.k_q
 
@@ -95,4 +96,16 @@ yaw_rate_kd = 0.005
 
 # ---------- power distribution -------------
 # formulation: kt * [o1, o2, o3, o4]^T = G_1_inv * [trust, tau_x, tau_y, tau_z]^T
-G_1_inv = np.linalg.inv(MAV.G_1)  # TODO: get the analytical solution of G_1
+# G_1_inv = np.linalg.inv(MAV.G_1)  # numerical inverse
+
+csc_alpha_div_4_l_frame = 1 / (4 * l_frame * np.sin(alpha))
+sec_alpha_div_4_l_frame = 1 / (4 * l_frame * np.cos(alpha))
+
+G_1_inv = np.array(
+    [
+        [1 / 4, csc_alpha_div_4_l_frame, -sec_alpha_div_4_l_frame, k_t / (4 * k_q)],
+        [1 / 4, -csc_alpha_div_4_l_frame, -sec_alpha_div_4_l_frame, -k_t / (4 * k_q)],
+        [1 / 4, -csc_alpha_div_4_l_frame, sec_alpha_div_4_l_frame, k_t / (4 * k_q)],
+        [1 / 4, csc_alpha_div_4_l_frame, sec_alpha_div_4_l_frame, -k_t / (4 * k_q)],
+    ]
+)
