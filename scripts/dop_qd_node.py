@@ -32,9 +32,13 @@ class DopQdNode:
         self.ts_ctl = rospy.get_param(rospy.get_name() + "/ts_ctl")  # time step for inner Controller
         self.ts_viz = rospy.get_param(rospy.get_name() + "/ts_viz")  # time step for visualization
 
+        # simulation
         qd_init_states = rospy.get_param(rospy.get_name() + "/qd_init_states")  # initial states for quadrotors
         self.num_agent = len(qd_init_states)  # number of quadrotors
-        self.ego_states = self._load_init_states(self.num_agent, qd_init_states)
+
+        self.ego_states = self._load_init_states(qd_init_states)
+        self.body_rate_cmd = self._load_init_cmd()
+        self.model = self._load_model()  # Load PyTorch dynamics model
 
         rospy.loginfo(
             f"Load params: \n num_agent: {self.num_agent} \n sim_ts: {self.ts_sim} \n control_ts: {self.ts_ctl}"
@@ -44,18 +48,6 @@ class DopQdNode:
         self.viz_marker_array = draw_mul_qd(self.num_agent)  # viz, text, downwash
         self.marker_array_pub = rospy.Publisher("mul_qds_viz", MarkerArray, queue_size=5)
         self.viz_is_init = False
-
-        # simulation
-        self.ctl_time = rospy.Time.now()
-        self.model = self._load_model()  # Load PyTorch model
-
-        # init cmd
-        body_rate_cmd = torch.zeros([self.num_agent, 4, 1], dtype=torch.float64).to("cuda")
-        body_rate_cmd[:, 3, 0] = 0.235  # throttle_cmd
-        body_rate_cmd[0, 0, 0] = 0.1  # roll_rate_cmd
-        body_rate_cmd[1, 1, 0] = 0.1  # pitch_rate_cmd
-        body_rate_cmd[2, 2, 0] = 0.1  # yaw_rate_cmd
-        self.body_rate_cmd = body_rate_cmd
 
         # timer for various frequencies  # TODO: delete this
         self.time_guarder = TimeGuarder(ts_sim=self.ts_sim, ts_measure=5)
@@ -75,11 +67,6 @@ class DopQdNode:
         """
 
         time_a = time.perf_counter()
-
-        # low-level controller
-        if (rospy.Time.now() - self.ctl_time).to_sec() > self.ts_ctl:
-            # run model with low_level controller
-            self.ctl_time = rospy.Time.now()
 
         # low_level controller and dynamics
         self.ego_states = self._run_model(self.ego_states, self.body_rate_cmd)
@@ -136,8 +123,8 @@ class DopQdNode:
 
         self.marker_array_pub.publish(self.viz_marker_array)
 
-    @staticmethod
-    def _load_init_states(num_agent: float, qd_init_states: list) -> torch.Tensor:
+    def _load_init_states(self, qd_init_states: list):
+        num_agent = self.num_agent
         ego_states = torch.zeros([num_agent, 31, 1], dtype=torch.float64).to("cuda")
         ego_states[:, 9, 0] = 1.0  # ew
         for i in range(num_agent):
@@ -147,19 +134,32 @@ class DopQdNode:
 
         return ego_states
 
+    def _load_init_cmd(self):
+        body_rate_cmd = torch.zeros([self.num_agent, 4, 1], dtype=torch.float64).to("cuda")
+        body_rate_cmd[:, 3, 0] = 0.235  # throttle_cmd
+        body_rate_cmd[0, 0, 0] = 0.1  # roll_rate_cmd
+        body_rate_cmd[1, 1, 0] = 0.1  # pitch_rate_cmd
+        body_rate_cmd[2, 2, 0] = 0.1  # yaw_rate_cmd
+
+        return body_rate_cmd
+
     def _load_model(self) -> torch.jit.ScriptModule:
         # Load PyTorch model here
         mul_qd = MulQuadrotors(self.num_agent, self.ts_sim, torch.float64).requires_grad_(False)
         if torch.cuda.is_available():
             mul_qd = mul_qd.to("cuda")
         sm_mul_qd = torch.jit.script(mul_qd)  # Script model for faster inference
-
         rospy.loginfo("Load model successfully!")
+
+        # set initial ego_states and body_rate_cmd
+        self.model = sm_mul_qd
+        self.ego_states = self._run_model(self.ego_states, self.body_rate_cmd)
+
         return sm_mul_qd
 
     def _run_model(self, ego_states: torch.Tensor, body_rate_cmd: torch.Tensor) -> torch.Tensor:
         # Run PyTorch model and get output tensor
-        output_tensor = self.model(ego_states, body_rate_cmd, self.ts_sim)
+        output_tensor = self.model(self.ts_sim, ego_states, body_rate_cmd)
         return output_tensor
 
 

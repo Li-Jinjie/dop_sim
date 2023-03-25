@@ -22,8 +22,17 @@ class MulQuadrotors(nn.Module):
         self.autopilot = AtpRate(num_agent, ts_control, dtype)
         self.dynamics = QdDynamics()
 
-    def forward(self, ego_states: torch.Tensor, body_rate_cmd: torch.Tensor, ts_sim: float):
-        delta_cmd = self.autopilot(ego_states, body_rate_cmd)
-        ego_states_new = self.dynamics(ego_states, delta_cmd, ts_sim)
+        self.ts_ctl = ts_control
+        self.ctl_t = 999.0
+        self.delta = nn.Parameter(torch.zeros([num_agent, 4, 1], dtype=dtype), False)
+
+    def forward(self, ts_sim: float, ego_states: torch.Tensor, body_rate_cmd: torch.Tensor):
+        if self.ctl_t > self.ts_ctl:
+            self.delta = self.autopilot(ego_states, body_rate_cmd)
+            self.ctl_t = 0.0
+
+        self.ctl_t += ts_sim
+
+        ego_states_new = self.dynamics(ts_sim, ego_states, self.delta)
 
         return ego_states_new

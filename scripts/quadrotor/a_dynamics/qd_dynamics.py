@@ -67,7 +67,7 @@ class QdDynamics(nn.Module):
         self.G_1_torch = nn.Parameter(torch.tensor(QMAV.G_1), False)
         self.ode_rigid_body = ODE(RigidBodyUseVw)
 
-    def forward(self, state: torch.Tensor, delta: torch.Tensor, dt: float):
+    def forward(self, dt: float, state: torch.Tensor, delta: torch.Tensor):
         """
         Integrate the differential equations defining a_dynamics, update sensors
         delta = (aileron, elevator, throttle, rudder) are the control inputs

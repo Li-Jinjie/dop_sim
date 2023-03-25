@@ -1,6 +1,6 @@
 ts_sim: 0.005
-ts_ctl: 0.005
-ts_viz: 0.04
+ts_ctl: 0.01
+ts_viz: 0.05
 
 # time_factor: 1.0  # only 1x simulation is supported now
 
@@ -8,13 +8,13 @@ ts_viz: 0.04
 qd_init_states:
   - - 0.0 # px
     - 0.0 # py
-    - 0.0 # pz
+    - 0.5 # pz
   - - 1.0 # px
     - 0.0 # py
-    - 0.0 # pz
+    - 1.0 # pz
   - - 0.0 # px
     - 1.0 # py
-    - 0.0 # pz
+    - 1.5 # pz
   - - 1.0 # px
     - 1.0 # py
-    - 0.0 # pz
+    - 2.0 # pz
