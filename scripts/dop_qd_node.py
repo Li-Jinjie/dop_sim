@@ -45,7 +45,9 @@ class DopQdNode:
         )
 
         # visualization
-        self.viz_drawer = MulQdDrawer(self.num_agent, has_qd=True, has_text=True, has_downwash=True)
+        self.viz_drawer = MulQdDrawer(
+            self.num_agent, has_qd=True, has_text=True, has_downwash=True, has_rpm=True, max_krpm=50.0, min_krpm=0.0
+        )
         self.marker_array_pub = rospy.Publisher("mul_qds_viz", MarkerArray, queue_size=5)
         self.viz_is_init = False
 
@@ -76,15 +78,12 @@ class DopQdNode:
 
     def pub_viz_callback(self, timer: rospy.timer.TimerEvent) -> None:
         # rospy.loginfo("Publish points for one round!")
-        ego_states = self.ego_states
-
-        viz_marker_array = self.viz_drawer.update(ego_states)
-
+        viz_marker_array = self.viz_drawer.update(self.ego_states)
         self.marker_array_pub.publish(viz_marker_array)
 
     def _load_init_states(self, qd_init_states: list):
         num_agent = self.num_agent
-        ego_states = torch.zeros([num_agent, 31, 1], dtype=torch.float64).to("cuda")
+        ego_states = torch.zeros([num_agent, 35, 1], dtype=torch.float64).to("cuda")
         ego_states[:, 9, 0] = 1.0  # ew
         for i in range(num_agent):
             ego_states[i][3][0] = qd_init_states[i][0]  # e
@@ -98,7 +97,7 @@ class DopQdNode:
         body_rate_cmd[:, 3, 0] = 0.235  # throttle_cmd
         body_rate_cmd[0, 0, 0] = 0.1  # roll_rate_cmd
         body_rate_cmd[1, 1, 0] = 0.1  # pitch_rate_cmd
-        body_rate_cmd[2, 2, 0] = 0.1  # yaw_rate_cmd
+        body_rate_cmd[2, 2, 0] = 0.5  # yaw_rate_cmd
 
         return body_rate_cmd
 
@@ -118,8 +117,8 @@ class DopQdNode:
 
     def _run_model(self, ego_states: torch.Tensor, body_rate_cmd: torch.Tensor) -> torch.Tensor:
         # Run PyTorch model and get output tensor
-        output_tensor = self.model(self.ts_sim, ego_states, body_rate_cmd)
-        return output_tensor
+        new_ego_states = self.model(self.ts_sim, ego_states, body_rate_cmd)
+        return new_ego_states
 
 
 class TimeGuarder:

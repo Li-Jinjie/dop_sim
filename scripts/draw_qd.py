@@ -10,6 +10,7 @@ import copy
 import numpy as np
 import rospy
 import torch
+import matplotlib.pyplot as plt
 
 from visualization_msgs.msg import MarkerArray, Marker
 from std_msgs.msg import ColorRGBA
@@ -167,7 +168,9 @@ class MulQdDrawer:
         has_qd: bool = True,
         has_text: bool = True,
         has_downwash: bool = True,
-        has_rpm: bool = True,
+        has_rpm: bool = False,
+        max_krpm: float = 30.0,
+        min_krpm: float = 0.0,
     ):
         self.num_agent = num_agent
 
@@ -178,6 +181,11 @@ class MulQdDrawer:
 
         self.viz_marker_array = self.draw_mul_qd(num_agent)  # viz, text, downwash
         self.viz_is_init = False
+
+        if self.has_rpm:
+            self.max_rpm = max_krpm
+            self.min_rpm = min_krpm
+            self.cmap = plt.get_cmap("YlOrRd")
 
     def draw_mul_qd(self, num_agent: int) -> MarkerArray:
         marker_array = MarkerArray()
@@ -223,6 +231,15 @@ class MulQdDrawer:
                 else:
                     viz_marker.action = viz_marker.MODIFY
                 viz_marker.pose = ego_pose
+
+                if self.has_rpm:
+                    for j in range(4):
+                        rpm = ego_states[i][31 + j][0].cpu()
+                        rpm_norm = (rpm - self.min_rpm) / (self.max_rpm - self.min_rpm)
+                        rgba = self.cmap(rpm_norm)
+                        start_index = j * 8 + 1
+                        end_index = (j + 1) * 8 + 1
+                        viz_marker.colors[start_index:end_index] = [ColorRGBA(rgba[0], rgba[1], rgba[2], rgba[3])] * 8
 
             # text
             if self.has_text:
