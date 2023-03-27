@@ -20,7 +20,7 @@ import torch
 from geometry_msgs.msg import Pose
 from visualization_msgs.msg import MarkerArray, Marker
 from quadrotor import MulQuadrotors
-from draw_qd import draw_mul_qd
+from draw_qd import MulQdDrawer
 
 
 class DopQdNode:
@@ -45,7 +45,7 @@ class DopQdNode:
         )
 
         # visualization
-        self.viz_marker_array = draw_mul_qd(self.num_agent)  # viz, text, downwash
+        self.viz_drawer = MulQdDrawer(self.num_agent, has_qd=True, has_text=True, has_downwash=True)
         self.marker_array_pub = rospy.Publisher("mul_qds_viz", MarkerArray, queue_size=5)
         self.viz_is_init = False
 
@@ -78,50 +78,9 @@ class DopQdNode:
         # rospy.loginfo("Publish points for one round!")
         ego_states = self.ego_states
 
-        # viz
-        for i in range(self.num_agent):
-            ego_pose = Pose()
-            ego_pose.position.x = ego_states[i][3][0]  # e
-            ego_pose.position.y = ego_states[i][4][0]  # n
-            ego_pose.position.z = ego_states[i][5][0]  # u
-            ego_pose.orientation.w = ego_states[i][9][0]  # ew
-            ego_pose.orientation.x = ego_states[i][10][0]  # ex
-            ego_pose.orientation.y = ego_states[i][11][0]  # ey
-            ego_pose.orientation.z = ego_states[i][12][0]  # ez
+        viz_marker_array = self.viz_drawer.update(ego_states)
 
-            # viz
-            viz_marker = self.viz_marker_array.markers[i]
-            viz_marker.header.stamp = rospy.Time.now()
-            if not self.viz_is_init:
-                viz_marker.action = viz_marker.ADD
-            else:
-                viz_marker.action = viz_marker.MODIFY
-            viz_marker.pose = ego_pose
-
-            # text
-            text_marker = self.viz_marker_array.markers[i + self.num_agent]
-            text_marker.header.stamp = rospy.Time.now()
-            if not self.viz_is_init:
-                text_marker.action = text_marker.ADD
-            else:
-                text_marker.action = text_marker.MODIFY
-            text_marker.pose = copy.deepcopy(ego_pose)
-            text_marker.pose.position.z += 0.1  # bias for text
-
-            # downwash
-            downwash_marker = self.viz_marker_array.markers[i + 2 * self.num_agent]
-            downwash_marker.header.stamp = rospy.Time.now()
-            if not self.viz_is_init:
-                downwash_marker.action = downwash_marker.ADD
-            else:
-                downwash_marker.action = downwash_marker.MODIFY
-            downwash_marker.pose = copy.deepcopy(ego_pose)
-            downwash_marker.pose.position.z -= 0.6  # bias for downwash
-
-            if not self.viz_is_init:
-                self.viz_is_init = True
-
-        self.marker_array_pub.publish(self.viz_marker_array)
+        self.marker_array_pub.publish(viz_marker_array)
 
     def _load_init_states(self, qd_init_states: list):
         num_agent = self.num_agent

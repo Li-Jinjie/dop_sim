@@ -6,10 +6,15 @@ File: draw_qd.py
 Date: 2023/3/23 上午9:31
 Description:
 """
+import copy
+import numpy as np
+import rospy
+import torch
+
 from visualization_msgs.msg import MarkerArray, Marker
 from std_msgs.msg import ColorRGBA
-from geometry_msgs.msg import PoseStamped, Point, Vector3
-import numpy as np
+from geometry_msgs.msg import Pose, Point, Vector3
+
 
 pi = np.pi
 
@@ -27,29 +32,7 @@ triangle_l = 8 * cm
 triangle_w = 4 * cm
 
 
-def draw_mul_qd(num_agent: int) -> MarkerArray:
-    marker_array = MarkerArray()
-
-    # viz
-    for i in range(num_agent):
-        marker = draw_one_qd(i)
-        marker_array.markers.append(marker)
-
-    # text
-    for i in range(num_agent):
-        text = draw_one_text(i)
-        marker_array.markers.append(text)
-
-    # downwash
-    for i in range(num_agent):
-        downwash = draw_one_downwash(i)
-        marker_array.markers.append(downwash)
-
-    return marker_array
-
-
 def draw_one_qd(idx: int) -> Marker:
-
     # points are in FLU coordinates
     p = [Point()] * 41
     p[0] = Point(triangle_l / 2, 0, 0)  # triangle on the body
@@ -175,3 +158,97 @@ def draw_one_downwash(idx: int) -> Marker:
     marker.pose.orientation.w = 1.0
 
     return marker
+
+
+class MulQdDrawer:
+    def __init__(
+        self,
+        num_agent: int,
+        has_qd: bool = True,
+        has_text: bool = True,
+        has_downwash: bool = True,
+        has_rpm: bool = True,
+    ):
+        self.num_agent = num_agent
+
+        self.has_qd = has_qd
+        self.has_text = has_text
+        self.has_downwash = has_downwash
+        self.has_rpm = has_rpm
+
+        self.viz_marker_array = self.draw_mul_qd(num_agent)  # viz, text, downwash
+        self.viz_is_init = False
+
+    def draw_mul_qd(self, num_agent: int) -> MarkerArray:
+        marker_array = MarkerArray()
+
+        # viz
+        if self.has_qd:
+            for i in range(num_agent):
+                marker = draw_one_qd(i)
+                marker_array.markers.append(marker)
+
+        # text
+        if self.has_text:
+            for i in range(num_agent):
+                text = draw_one_text(i)
+                marker_array.markers.append(text)
+
+        # downwash
+        if self.has_downwash:
+            for i in range(num_agent):
+                downwash = draw_one_downwash(i)
+                marker_array.markers.append(downwash)
+
+        return marker_array
+
+    def update(self, ego_states: torch.Tensor) -> MarkerArray:
+        # viz
+        for i in range(self.num_agent):
+            ego_pose = Pose()
+            ego_pose.position.x = ego_states[i][3][0]  # e
+            ego_pose.position.y = ego_states[i][4][0]  # n
+            ego_pose.position.z = ego_states[i][5][0]  # u
+            ego_pose.orientation.w = ego_states[i][9][0]  # ew
+            ego_pose.orientation.x = ego_states[i][10][0]  # ex
+            ego_pose.orientation.y = ego_states[i][11][0]  # ey
+            ego_pose.orientation.z = ego_states[i][12][0]  # ez
+
+            # viz
+            if self.has_qd:
+                viz_marker = self.viz_marker_array.markers[i]
+                viz_marker.header.stamp = rospy.Time.now()
+                if not self.viz_is_init:
+                    viz_marker.action = viz_marker.ADD
+                else:
+                    viz_marker.action = viz_marker.MODIFY
+                viz_marker.pose = ego_pose
+
+            # text
+            if self.has_text:
+                text_marker = self.viz_marker_array.markers[i + self.num_agent * self.has_qd]
+                text_marker.header.stamp = rospy.Time.now()
+                if not self.viz_is_init:
+                    text_marker.action = text_marker.ADD
+                else:
+                    text_marker.action = text_marker.MODIFY
+                text_marker.pose = copy.deepcopy(ego_pose)
+                text_marker.pose.position.z += 0.1  # bias for text
+
+            # downwash
+            if self.has_downwash:
+                downwash_marker = self.viz_marker_array.markers[
+                    i + self.num_agent * self.has_qd + self.num_agent * self.has_text
+                ]
+                downwash_marker.header.stamp = rospy.Time.now()
+                if not self.viz_is_init:
+                    downwash_marker.action = downwash_marker.ADD
+                else:
+                    downwash_marker.action = downwash_marker.MODIFY
+                downwash_marker.pose = copy.deepcopy(ego_pose)
+                downwash_marker.pose.position.z -= 0.6  # bias for downwash
+
+            if not self.viz_is_init:
+                self.viz_is_init = True
+
+        return self.viz_marker_array
