@@ -73,9 +73,9 @@ class QdDynamics(nn.Module):
         delta = (aileron, elevator, throttle, rudder) are the control inputs
         Ts is the time step between function calls.
 
-        delta = [aileron, elevator, throttle, rudder]
+        delta = [o1, o2, o3, o4]
         state = [player, group, HP, north, east, down, phi, theta, psi, ew, ex, ey, ez, vx, vy, vz, u, v, w,
-        p, q, r, Va, Vg, alpha, beta, gamma, chi, wn, we, wd, xxx]
+        p, q, r, Va, Vg, alpha, beta, gamma, chi, wn, we, wd, o1, o2, o3, o4]
         input = [fx, fy, fz, l, m, n]
         """
         # get forces and torques acting on rigid body
@@ -84,6 +84,8 @@ class QdDynamics(nn.Module):
         state = self._update_dynamics(state, forces_i_torques_b, dt)
 
         state = _update_other_states(state, r_mtx)
+
+        state[:, 31:35, :] = delta[:, 0:4, :]
 
         return state
 
