@@ -17,8 +17,9 @@ import copy
 import time
 import rospy
 import torch
-from geometry_msgs.msg import Pose
-from visualization_msgs.msg import MarkerArray, Marker
+from visualization_msgs.msg import MarkerArray
+from mavros_msgs.msg import AttitudeTarget, State, ESCStatus, ESCStatusItem
+from nav_msgs.msg import Odometry
 from quadrotor import MulQuadrotors
 from draw_qd import MulQdDrawer
 
@@ -44,6 +45,31 @@ class DopQdNode:
             f"Load params: \n num_agent: {self.num_agent} \n sim_ts: {self.ts_sim} \n control_ts: {self.ts_ctl}"
         )
 
+        # control related states
+        # - odometry
+        self.mul_odom = [Odometry()] * self.num_agent
+        self.mul_odom_pub = []
+        for i in range(self.num_agent):
+            self.mul_odom_pub.append(rospy.Publisher(f"/qd_{i}/mavros/local_position/odom", Odometry, queue_size=5))
+
+        # - ESC status, mainly rpm
+        esc_status = ESCStatus()
+        for i in range(4):  # quadrotor
+            esc_status.esc_status.append(ESCStatusItem())
+        self.mul_esc = [esc_status] * self.num_agent
+        self.mul_esc_pub = []
+        for i in range(self.num_agent):
+            self.mul_esc_pub.append(rospy.Publisher(f"/qd_{i}/mavros/esc_status", ESCStatus, queue_size=5))
+
+        # - state
+        state = State()
+        state.armed = False
+        state.connected = True
+        self.mul_state = [state] * self.num_agent
+        self.mul_state_pub = []
+        for i in range(self.num_agent):
+            self.mul_state_pub.append(rospy.Publisher(f"/qd_{i}/mavros/state", State, queue_size=5))
+
         # visualization
         self.viz_drawer = MulQdDrawer(
             self.num_agent, has_qd=True, has_text=True, has_downwash=True, has_rpm=True, max_krpm=50.0, min_krpm=0.0
@@ -58,6 +84,9 @@ class DopQdNode:
         # note that the callback function will be passed a rospy.timer.TimerEvent object after self
         rospy.Timer(rospy.Duration(self.ts_sim), self.sim_loop_callback)
         rospy.Timer(rospy.Duration(self.ts_viz), self.pub_viz_callback)
+        rospy.Timer(rospy.Duration(1 / 100), self.pub_odom_callback)
+        rospy.Timer(rospy.Duration(1 / 50), self.pub_esc_callback)
+        rospy.Timer(rospy.Duration(1), self.pub_state_callback)
 
         rospy.loginfo("Start simulation!")
 
@@ -80,6 +109,37 @@ class DopQdNode:
         # rospy.loginfo("Publish points for one round!")
         viz_marker_array = self.viz_drawer.update(self.ego_states)
         self.marker_array_pub.publish(viz_marker_array)
+
+    def pub_odom_callback(self, timer: rospy.timer.TimerEvent) -> None:
+        for i in range(self.num_agent):
+            self.mul_odom[i].header.stamp = rospy.Time.now()
+            self.mul_odom[i].header.frame_id = "odom"
+            self.mul_odom[i].pose.pose.position.x = self.ego_states[i][3][0]  # e
+            self.mul_odom[i].pose.pose.position.y = self.ego_states[i][4][0]  # n
+            self.mul_odom[i].pose.pose.position.z = self.ego_states[i][5][0]  # u
+            self.mul_odom[i].pose.pose.orientation.x = self.ego_states[i][10][0]  # ex
+            self.mul_odom[i].pose.pose.orientation.y = self.ego_states[i][11][0]  # ey
+            self.mul_odom[i].pose.pose.orientation.z = self.ego_states[i][12][0]  # ez
+            self.mul_odom[i].pose.pose.orientation.w = self.ego_states[i][9][0]  # ew
+            self.mul_odom[i].twist.twist.linear.x = self.ego_states[i][13][0]  # vx
+            self.mul_odom[i].twist.twist.linear.y = self.ego_states[i][14][0]  # vy
+            self.mul_odom[i].twist.twist.linear.z = self.ego_states[i][15][0]  # vz
+            self.mul_odom[i].twist.twist.angular.x = self.ego_states[i][19][0]  # p
+            self.mul_odom[i].twist.twist.angular.y = self.ego_states[i][20][0]  # q
+            self.mul_odom[i].twist.twist.angular.z = self.ego_states[i][21][0]  # r
+            self.mul_odom_pub[i].publish(self.mul_odom[i])
+
+    def pub_esc_callback(self, timer: rospy.timer.TimerEvent) -> None:
+        for i in range(self.num_agent):
+            self.mul_esc[i].header.stamp = rospy.Time.now()
+            for j in range(4):  # quadrotor
+                self.mul_esc[i].esc_status[j].rpm = int(1000 * self.ego_states[i][31 + j][0])
+            self.mul_esc_pub[i].publish(self.mul_esc[i])
+
+    def pub_state_callback(self, timer: rospy.timer.TimerEvent) -> None:
+        for i in range(self.num_agent):
+            self.mul_state[i].header.stamp = rospy.Time.now()
+            self.mul_state_pub[i].publish(self.mul_state[i])
 
     def _load_init_states(self, qd_init_states: list):
         num_agent = self.num_agent

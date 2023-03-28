@@ -9,7 +9,7 @@ Description:
 
 # "player", "group", "HP",  # 0,1,2 base parameters
 # # -------- dynamics related --------
-# "north", "east", "down", "phi", "theta", "psi",  # 3, 4, 5, 6, 7, 8
+# "east", "north", "up", "phi", "theta", "psi",  # 3, 4, 5, 6, 7, 8
 # "ew", "ex", "ey", "ez",  # 9, 10, 11, 12 四元数
 # "vx", "vy", "vz", "u", "v", "w",  # 13, 14, 15, 16, 17, 18 分别是世界系下的和机体系下的速度，具体选哪个和agent动力学有关
 # "p", "q", "r",  # 19, 20, 21 角速度
