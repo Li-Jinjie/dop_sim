@@ -88,6 +88,10 @@ class DopQdNode:
         rospy.Timer(rospy.Duration(1 / 50), self.pub_esc_callback)
         rospy.Timer(rospy.Duration(1), self.pub_state_callback)
 
+        # register subscriber
+        for i in range(self.num_agent):
+            rospy.Subscriber(f"/qd_{i}/mavros/setpoint_raw/attitude", AttitudeTarget, self.body_rate_cmd_callback, i)
+
         rospy.loginfo("Start simulation!")
 
     def sim_loop_callback(self, timer: rospy.timer.TimerEvent) -> None:
@@ -140,6 +144,12 @@ class DopQdNode:
         for i in range(self.num_agent):
             self.mul_state[i].header.stamp = rospy.Time.now()
             self.mul_state_pub[i].publish(self.mul_state[i])
+
+    def body_rate_cmd_callback(self, msg: AttitudeTarget, i: int) -> None:
+        self.body_rate_cmd[i][0][0] = msg.body_rate.x
+        self.body_rate_cmd[i][1][0] = msg.body_rate.y
+        self.body_rate_cmd[i][2][0] = msg.body_rate.z
+        self.body_rate_cmd[i][3][0] = msg.thrust
 
     def _load_init_states(self, qd_init_states: list):
         num_agent = self.num_agent
