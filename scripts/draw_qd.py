@@ -7,6 +7,8 @@ Date: 2023/3/23 上午9:31
 Description:
 """
 import copy
+from typing import List
+
 import numpy as np
 import rospy
 import torch
@@ -33,7 +35,7 @@ triangle_l = 8 * cm
 triangle_w = 4 * cm
 
 
-def draw_one_qd(idx: int) -> Marker:
+def draw_one_qd(idx: int, ns: str) -> Marker:
     # points are in FLU coordinates
     p = [Point()] * 41
     p[0] = Point(triangle_l / 2, 0, 0)  # triangle on the body
@@ -117,7 +119,7 @@ def draw_one_qd(idx: int) -> Marker:
     marker = Marker()
     marker.header.frame_id = "map"
     marker.type = marker.TRIANGLE_LIST
-    marker.ns = f"qd_{idx}"
+    marker.ns = ns
     marker.id = idx
     marker.action = marker.ADD
     marker.color.a = 1.0  # must be set greater than 0 to be visible. This alpha is for the whole body.
@@ -125,33 +127,32 @@ def draw_one_qd(idx: int) -> Marker:
     marker.colors = mesh_colors
     marker.scale = Vector3(1, 1, 1)
     marker.pose.orientation.w = 1.0
-    marker.text = f"qd_{idx}"
 
     return marker
 
 
-def draw_one_text(idx: int) -> Marker:
+def draw_one_text(idx: int, text: str) -> Marker:
     marker = Marker()
     marker.header.frame_id = "map"
     marker.type = marker.TEXT_VIEW_FACING
-    marker.ns = f"qd_{idx}"
+    marker.ns = text
     marker.id = idx + 900000
     marker.action = marker.ADD
     marker.color = ColorRGBA(
         1.0, 0.39, 0.28, 1.0
     )  # must be set greater than 0 to be visible. This alpha is for the whole body.
-    marker.text = f"qd_{idx}"
+    marker.text = text
     marker.scale.z = 0.1
     marker.pose.orientation.w = 1.0
 
     return marker
 
 
-def draw_one_downwash(idx: int) -> Marker:
+def draw_one_downwash(idx: int, ns: str) -> Marker:
     marker = Marker()
     marker.header.frame_id = "map"
     marker.type = marker.CYLINDER
-    marker.ns = f"qd_{idx}"
+    marker.ns = ns
     marker.id = idx + 800000
     marker.action = marker.ADD
     marker.color = ColorRGBA(92 / 255, 179 / 255, 204 / 255, 0.05)  # 碧青
@@ -165,6 +166,7 @@ class MulQdDrawer:
     def __init__(
         self,
         num_agent: int,
+        ego_names: List[str],
         has_qd: bool = True,
         has_text: bool = True,
         has_downwash: bool = True,
@@ -179,7 +181,7 @@ class MulQdDrawer:
         self.has_downwash = has_downwash
         self.has_rpm = has_rpm
 
-        self.viz_marker_array = self.draw_mul_qd(num_agent)  # viz, text, downwash
+        self.viz_marker_array = self.draw_mul_qd(num_agent, ego_names)  # viz, text, downwash
         self.viz_is_init = False
 
         if self.has_rpm:
@@ -187,25 +189,25 @@ class MulQdDrawer:
             self.min_rpm = min_krpm
             self.cmap = plt.get_cmap("YlOrRd")
 
-    def draw_mul_qd(self, num_agent: int) -> MarkerArray:
+    def draw_mul_qd(self, num_agent: int, ego_names: List[str]) -> MarkerArray:
         marker_array = MarkerArray()
 
         # viz
         if self.has_qd:
             for i in range(num_agent):
-                marker = draw_one_qd(i)
+                marker = draw_one_qd(i, ego_names[i])
                 marker_array.markers.append(marker)
 
         # text
         if self.has_text:
             for i in range(num_agent):
-                text = draw_one_text(i)
+                text = draw_one_text(i, ego_names[i])
                 marker_array.markers.append(text)
 
         # downwash
         if self.has_downwash:
             for i in range(num_agent):
-                downwash = draw_one_downwash(i)
+                downwash = draw_one_downwash(i, ego_names[i])
                 marker_array.markers.append(downwash)
 
         return marker_array

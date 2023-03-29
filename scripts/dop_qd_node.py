@@ -37,7 +37,7 @@ class DopQdNode:
         qd_init_states = rospy.get_param(rospy.get_name() + "/qd_init_states")  # initial states for quadrotors
         self.num_agent = len(qd_init_states)  # number of quadrotors
 
-        self.ego_states = self._load_init_states(qd_init_states)
+        self.ego_states, self.ego_names = self._load_init_states(qd_init_states)
         self.body_rate_cmd = self._load_init_cmd()
         self.model = self._load_model()  # Load PyTorch dynamics model
 
@@ -50,7 +50,9 @@ class DopQdNode:
         self.mul_odom = [Odometry()] * self.num_agent
         self.mul_odom_pub = []
         for i in range(self.num_agent):
-            self.mul_odom_pub.append(rospy.Publisher(f"/qd_{i}/mavros/local_position/odom", Odometry, queue_size=5))
+            self.mul_odom_pub.append(
+                rospy.Publisher(f"/{self.ego_names[i]}/mavros/local_position/odom", Odometry, queue_size=5)
+            )
 
         # - ESC status, mainly rpm
         esc_status = ESCStatus()
@@ -59,7 +61,7 @@ class DopQdNode:
         self.mul_esc = [esc_status] * self.num_agent
         self.mul_esc_pub = []
         for i in range(self.num_agent):
-            self.mul_esc_pub.append(rospy.Publisher(f"/qd_{i}/mavros/esc_status", ESCStatus, queue_size=5))
+            self.mul_esc_pub.append(rospy.Publisher(f"/{self.ego_names[i]}/mavros/esc_status", ESCStatus, queue_size=5))
 
         # - state
         state = State()
@@ -68,11 +70,11 @@ class DopQdNode:
         self.mul_state = [state] * self.num_agent
         self.mul_state_pub = []
         for i in range(self.num_agent):
-            self.mul_state_pub.append(rospy.Publisher(f"/qd_{i}/mavros/state", State, queue_size=5))
+            self.mul_state_pub.append(rospy.Publisher(f"/{self.ego_names[i]}/mavros/state", State, queue_size=5))
 
         # visualization
         self.viz_drawer = MulQdDrawer(
-            self.num_agent, has_qd=True, has_text=True, has_downwash=True, has_rpm=True, max_krpm=50.0, min_krpm=0.0
+            self.num_agent, self.ego_names, True, True, True, has_rpm=True, max_krpm=50.0, min_krpm=0.0
         )
         self.marker_array_pub = rospy.Publisher("mul_qds_viz", MarkerArray, queue_size=5)
         self.viz_is_init = False
@@ -90,7 +92,9 @@ class DopQdNode:
 
         # register subscriber
         for i in range(self.num_agent):
-            rospy.Subscriber(f"/qd_{i}/mavros/setpoint_raw/attitude", AttitudeTarget, self.body_rate_cmd_callback, i)
+            rospy.Subscriber(
+                f"/{self.ego_names[i]}/mavros/setpoint_raw/attitude", AttitudeTarget, self.body_rate_cmd_callback, i
+            )
 
         rospy.loginfo("Start simulation!")
 
@@ -153,14 +157,22 @@ class DopQdNode:
 
     def _load_init_states(self, qd_init_states: list):
         num_agent = self.num_agent
+
+        ego_names = []
+
         ego_states = torch.zeros([num_agent, 35, 1], dtype=torch.float64).to("cuda")
         ego_states[:, 9, 0] = 1.0  # ew
         for i in range(num_agent):
-            ego_states[i][3][0] = qd_init_states[i][0]  # e
-            ego_states[i][4][0] = qd_init_states[i][1]  # n
-            ego_states[i][5][0] = qd_init_states[i][2]  # u
+            if "name" in qd_init_states[i]:
+                ego_names.append(qd_init_states[i]["name"])
+            else:
+                ego_names.append(f"qd_{i}")
 
-        return ego_states
+            ego_states[i][3][0] = qd_init_states[i]["init_pos"][0]  # e
+            ego_states[i][4][0] = qd_init_states[i]["init_pos"][1]  # n
+            ego_states[i][5][0] = qd_init_states[i]["init_pos"][2]  # u
+
+        return ego_states, ego_names
 
     def _load_init_cmd(self):
         body_rate_cmd = torch.zeros([self.num_agent, 4, 1], dtype=torch.float64).to("cuda")

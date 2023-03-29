@@ -6,15 +6,21 @@ ts_viz: 0.05
 
 # ned frame
 qd_init_states:
-  - - 0.0 # px
-    - 0.0 # py
-    - 0.5 # pz
-  - - 1.0 # px
-    - 0.0 # py
-    - 1.0 # pz
-  - - 0.0 # px
-    - 1.0 # py
-    - 1.5 # pz
-  - - 1.0 # px
-    - 1.0 # py
-    - 2.0 # pz
+  - name: "fhnp"
+    init_pos:
+      - 0.0 # px
+      - 0.0 # py
+      - 0.5 # pz
+  - name: "xiao_feng"
+    init_pos:
+      - 1.0 # px
+      - 0.0 # py
+      - 1.0 # pz
+  - init_pos:
+      - 0.0 # px
+      - 1.0 # py
+      - 1.5 # pz
+  - init_pos:
+      - 1.0 # px
+      - 1.0 # py
+      - 2.0 # pz
