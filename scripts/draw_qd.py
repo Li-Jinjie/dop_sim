@@ -187,7 +187,7 @@ class MulQdDrawer:
         if self.has_rpm:
             self.max_rpm = max_krpm
             self.min_rpm = min_krpm
-            self.cmap = plt.get_cmap("YlOrRd")
+            self.cmap = plt.get_cmap("RdYlBu")  # lower - blue, middle- yellow, upper - red
 
     def draw_mul_qd(self, num_agent: int, ego_names: List[str]) -> MarkerArray:
         marker_array = MarkerArray()
@@ -238,7 +238,7 @@ class MulQdDrawer:
                     for j in range(4):
                         rpm = ego_states[i][31 + j][0].cpu()
                         rpm_norm = (rpm - self.min_rpm) / (self.max_rpm - self.min_rpm)
-                        rgba = self.cmap(rpm_norm)
+                        rgba = self.cmap(1 - rpm_norm)
                         start_index = j * 8 + 1
                         end_index = (j + 1) * 8 + 1
                         viz_marker.colors[start_index:end_index] = [ColorRGBA(rgba[0], rgba[1], rgba[2], rgba[3])] * 8

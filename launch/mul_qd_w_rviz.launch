@@ -1,7 +1,9 @@
 <launch>
+    <arg name="config_file" default="two_qd_config.yaml" />
+
 
     <node pkg="dop_qd_sim" type="dop_qd_node.py" name="qd_sim" output="screen">
-        <rosparam command="load" file="$(find dop_qd_sim)/config/mul_qd_config.yaml"/>
+        <rosparam command="load" file="$(find dop_qd_sim)/config/$(arg config_file)"/>
     </node>
 
 <!--    <node pkg="rviz" type="rviz" name="rviz" args="-d $(find dop_qd_sim)/rviz/multi_qd.rviz" respawn="false" output="screen"/>-->

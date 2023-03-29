@@ -65,6 +65,7 @@ class DopQdNode:
 
         # - state
         state = State()
+        state.mode = "OFFBOARD"
         state.armed = False
         state.connected = True
         self.mul_state = [state] * self.num_agent
@@ -74,7 +75,7 @@ class DopQdNode:
 
         # visualization
         self.viz_drawer = MulQdDrawer(
-            self.num_agent, self.ego_names, True, True, True, has_rpm=True, max_krpm=50.0, min_krpm=0.0
+            self.num_agent, self.ego_names, True, True, True, has_rpm=True, max_krpm=24.0, min_krpm=0.0
         )
         self.marker_array_pub = rospy.Publisher("mul_qds_viz", MarkerArray, queue_size=5)
         self.viz_is_init = False
@@ -176,10 +177,12 @@ class DopQdNode:
 
     def _load_init_cmd(self):
         body_rate_cmd = torch.zeros([self.num_agent, 4, 1], dtype=torch.float64).to("cuda")
-        body_rate_cmd[:, 3, 0] = 0.235  # throttle_cmd
-        body_rate_cmd[0, 0, 0] = 0.1  # roll_rate_cmd
-        body_rate_cmd[1, 1, 0] = 0.1  # pitch_rate_cmd
-        body_rate_cmd[2, 2, 0] = 0.5  # yaw_rate_cmd
+
+        # Add realsense and gps modules: 1.5344 kg -> 0.23202; pure aircraft: 1.4844 kg -> 0.22400
+        body_rate_cmd[:, 3, 0] = 0.22400  # throttle_cmd
+        # body_rate_cmd[0, 0, 0] = 0.1  # roll_rate_cmd
+        # body_rate_cmd[1, 1, 0] = 0.1  # pitch_rate_cmd
+        # body_rate_cmd[2, 2, 0] = 0.5  # yaw_rate_cmd
 
         return body_rate_cmd
 

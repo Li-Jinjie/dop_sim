@@ -40,7 +40,7 @@ l_frame = 0.1372  # m
 alpha_frame = 45.0 * np.pi / 180.0  # rad
 
 # inertia parameters
-mass = 1.5344  # kg
+mass = 1.4844  # kg    Add realsense and gps modules: 1.5344 kg; pure aircraft: 1.4844 kg, which is used in real-world experiments
 gravity = 9.81  # m/s^2
 
 Ixx = 0.0094  # kg m^2
