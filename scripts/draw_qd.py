@@ -173,6 +173,7 @@ class MulQdDrawer:
         has_rpm: bool = False,
         max_krpm: float = 30.0,
         min_krpm: float = 0.0,
+        cmap: str = "Spectral",
     ):
         self.num_agent = num_agent
 
@@ -187,7 +188,7 @@ class MulQdDrawer:
         if self.has_rpm:
             self.max_rpm = max_krpm
             self.min_rpm = min_krpm
-            self.cmap = plt.get_cmap("RdYlBu")  # lower - blue, middle- yellow, upper - red
+            self.cmap = plt.get_cmap(cmap)  # try RdYlBu, RdBu, coolwarm
 
     def draw_mul_qd(self, num_agent: int, ego_names: List[str]) -> MarkerArray:
         marker_array = MarkerArray()
@@ -265,7 +266,14 @@ class MulQdDrawer:
                 else:
                     downwash_marker.action = downwash_marker.MODIFY
                 downwash_marker.pose = copy.deepcopy(ego_pose)
-                downwash_marker.pose.position.z -= 0.6  # bias for downwash
+
+                # bias for downwash
+                phi = ego_states[i][6][0]
+                theta = ego_states[i][7][0]
+                bias_h = 0.6  # meter
+                downwash_marker.pose.position.x -= 1.5 * theta * bias_h
+                downwash_marker.pose.position.y += 1.5 * phi * bias_h
+                downwash_marker.pose.position.z -= bias_h  # bias for downwash
 
             if not self.viz_is_init:
                 self.viz_is_init = True

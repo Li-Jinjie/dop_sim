@@ -42,7 +42,10 @@ class DopQdNode:
         self.model = self._load_model()  # Load PyTorch dynamics model
 
         rospy.loginfo(
-            f"Load params: \n num_agent: {self.num_agent} \n sim_ts: {self.ts_sim} \n control_ts: {self.ts_ctl}"
+            f"Load params: \n "
+            f"num_agent: {self.num_agent} \n "
+            f"sim_ts: {self.ts_sim} s \n "
+            f"control_ts for body rate controller: {self.ts_ctl} s"
         )
 
         # control related states
