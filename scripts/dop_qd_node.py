@@ -34,12 +34,15 @@ class DopQdNode:
         self.ts_viz = rospy.get_param(rospy.get_name() + "/ts_viz")  # time step for visualization
         self.has_downwash = rospy.get_param(rospy.get_name() + "/has_downwash")
         self.has_motor_model = rospy.get_param(rospy.get_name() + "/has_motor_model")
+        self.has_battery = rospy.get_param(rospy.get_name() + "/has_battery")
 
         params_log = {
             "ts_sim": "ts_sim [s]",
             "ts_ctl": "ts_control for body rate controller [s]",
             "ts_viz": "ts_viz [s]",
             "has_downwash": "has_downwash",
+            "has_motor_model": "has_motor_model",
+            "has_battery": "has_battery",
         }  # param_name: explanation, use for
 
         rospy.loginfo("Load params: \n " + "\n ".join(f"- {params_log[k]}: {self.__dict__[k]}" for k in params_log))
@@ -198,7 +201,13 @@ class DopQdNode:
     def _load_model(self) -> torch.jit.ScriptModule:
         # Load PyTorch model here
         mul_qd = MulQuadrotors(
-            self.num_agent, self.ts_sim, self.ts_ctl, torch.float64, self.has_downwash, self.has_motor_model
+            self.num_agent,
+            self.ts_sim,
+            self.ts_ctl,
+            torch.float64,
+            self.has_downwash,
+            self.has_motor_model,
+            self.has_battery,
         ).requires_grad_(False)
         if torch.cuda.is_available():
             mul_qd = mul_qd.to("cuda")

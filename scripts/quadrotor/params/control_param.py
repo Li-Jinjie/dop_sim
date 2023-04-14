@@ -19,6 +19,9 @@ k_q = MAV.k_q
 k_th = 17.666
 b_th = -1.206
 
+# duration
+t_all = 705.0  # s
+
 # ----------position loop-------------
 """
 参数是在Ts=0.02s的条件下调试的
