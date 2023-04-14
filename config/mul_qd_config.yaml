@@ -4,6 +4,8 @@ ts_viz: 0.05
 
 # time_factor: 1.0  # only 1x simulation is supported now
 
+has_downwash: True
+
 # ned frame
 qd_init_states:
   - init_pos:

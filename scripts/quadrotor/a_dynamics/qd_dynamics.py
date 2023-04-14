@@ -62,10 +62,11 @@ def _update_other_states(state: torch.Tensor, r_mtx: torch.Tensor):
 
 
 class QdDynamics(nn.Module):
-    def __init__(self):
+    def __init__(self, has_downwash):
         super().__init__()
         self.G_1_torch = nn.Parameter(torch.tensor(QMAV.G_1), False)
         self.ode_rigid_body = ODE(RigidBodyUseVw)
+        self.has_downwash = has_downwash
 
     def forward(self, dt: float, state: torch.Tensor, delta: torch.Tensor):
         """
@@ -74,7 +75,7 @@ class QdDynamics(nn.Module):
         Ts is the time step between function calls.
 
         delta = [o1, o2, o3, o4]
-        state = [player, group, HP, north, east, down, phi, theta, psi, ew, ex, ey, ez, vx, vy, vz, u, v, w,
+        state = [player, group, HP, east, north, up, phi, theta, psi, ew, ex, ey, ez, vx, vy, vz, u, v, w,
         p, q, r, Va, Vg, alpha, beta, gamma, chi, wn, we, wd, o1, o2, o3, o4]
         input = [fx, fy, fz, l, m, n]
         """
@@ -93,7 +94,7 @@ class QdDynamics(nn.Module):
         """calculate forces and torques
         return the forces on the UAV based on the state, wind, and control surfaces
         :param delta = [o1, o2, o3, o4]
-        state = [player, group, HP, north, east, down, phi, theta, psi, ew, ex, ey, ez, vx, vy, vz, u, v, w,
+        state = [player, group, HP, east, north, up, phi, theta, psi, ew, ex, ey, ez, vx, vy, vz, u, v, w,
         p, q, r, Va, Vg, alpha, beta, gamma, chi, wn, we, xxx]
         :return: Forces and Torques on the UAV [fx, fy, fz, l, m, n]
         """
@@ -102,6 +103,11 @@ class QdDynamics(nn.Module):
         thrust_torque = self._motor_model(delta)
 
         f_c = thrust_torque[:, 0:1, :]
+
+        fu_x = 0
+        fu_y = 0
+        fu_z = f_c
+
         tau_x = thrust_torque[:, 1:2, :]
         tau_y = thrust_torque[:, 2:3, :]
         tau_z = thrust_torque[:, 3:4, :]
@@ -131,15 +137,58 @@ class QdDynamics(nn.Module):
         state[:, 24:25, :] = alpha
         state[:, 25:26, :] = beta
 
-        # compute force in body frame: thrust + aerodynamic drag force
+        # ------- compute air drag forces --------
+        fa_x = -QMAV.kd_x * u_r
+        fa_y = -QMAV.kd_y * v_r
+        fa_z = -QMAV.kd_z * w_r + QMAV.k_h * (u_r**2 + v_r**2)
 
-        fx = 0 + -QMAV.kd_x * u_r
-        fy = 0 + -QMAV.kd_y * v_r
-        fz = f_c + -QMAV.kd_z * w_r + QMAV.k_h * (u_r**2 + v_r**2)
+        # ------- compute force in body frame: thrust + aerodynamic drag force --------
+        fx_b = fu_x + fa_x
+        fy_b = fu_y + fa_y
+        fz_b = fu_z + fa_z
 
         # transform forces from body frame to inertial frame
         # r_mtx: body to inertial  r_mtx.T: inertial to body
-        f_i = r_mtx @ torch.cat((fx, fy, fz), 1)
+        f_i = r_mtx @ torch.cat((fx_b, fy_b, fz_b), 1)
+
+        if self.has_downwash:
+            # ------- compute downwash forces --------
+            east = state[:, 3:4, :]
+            north = state[:, 4:5, :]
+            up = state[:, 5:6, :]
+
+            # others - ego. see column vector
+            # leverage PyTorch broadcasting to accelerate the computation
+            dx_bc = torch.transpose(east, 0, 1) - east  # bc refers to broadcast
+            dy_bc = torch.transpose(north, 0, 1) - north
+            dz_bc = torch.transpose(up, 0, 1) - up
+
+            # avoid calculating too large numbers, unnecessary
+            dx_bc[dx_bc > QMAV.dw_range_horiz] = QMAV.dw_range_horiz
+            dy_bc[dy_bc > QMAV.dw_range_horiz] = QMAV.dw_range_horiz
+            dist_horiz = torch.sqrt(dx_bc**2 + dy_bc**2)
+
+            is_close = dist_horiz < QMAV.dw_range_horiz
+            is_lower = (dz_bc > 0) * (dz_bc < QMAV.dw_range_vert)
+            is_valid = is_close * is_lower
+
+            dist_horiz = dist_horiz * is_valid
+            dz_bc = dz_bc * is_valid
+
+            # dz_bc is forbidden to be zero
+            dz_zero_flag = dz_bc == 0
+            dz_bc[dz_zero_flag] = 1
+
+            fdz_bc = (
+                -QMAV.k_d1
+                * (QMAV.rp / 4 / dz_bc) ** 2
+                * torch.exp(-0.5 * (dist_horiz / (QMAV.k_d2 * dz_bc + QMAV.k_d3)) ** 2)
+            )
+            fdz_bc[dz_zero_flag] = 0
+
+            fd_z = torch.sum(fdz_bc, 1).unsqueeze(1)
+
+            f_i[:, 2:3, :] += fd_z
 
         return state, torch.cat([f_i, tau_x, tau_y, tau_z], dim=1), r_mtx
 

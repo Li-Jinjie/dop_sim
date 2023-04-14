@@ -7,7 +7,7 @@ from ..tools.rotations import euler_2_quaternion_one
 #   Initial conditions for MAV
 east0 = 0.0  # initial east position
 north0 = 0.0  # initial north position
-up0 = 1.0  # initial down position
+up0 = 1.0  # initial up position
 vx0 = 0.0  # initial velocity along body x-axis
 vy0 = 0.0  # initial velocity along body y-axis
 vz0 = 0.0  # initial velocity along body z-axis
@@ -32,7 +32,7 @@ qy0 = q.item(2)
 qz0 = q.item(3)
 
 ######################################################################################
-#   Physical Parameters, identified by me!
+#   Inertial Parameters, identified by me!
 ######################################################################################
 
 # frame parameters
@@ -48,13 +48,6 @@ Iyy = 0.0134  # kg m^2
 Izz = 0.0145  # kg m^2
 Ixz = 0.0
 
-# aerodynamic drag model, refer to "A Comparative Study" Sun, et al.
-kd_x = 0.26  # N s/m
-kd_y = 0.26  # N s/m
-kd_z = 0.42  # N s/m
-
-k_h = 0.01  # N s^2/m^2
-
 ######################################################################################
 #   Propeller thrust / torque parameters, identified by me!
 ######################################################################################
@@ -66,7 +59,25 @@ k_t = 2.8158e-08 * 1e6  # N/kRPM^2
 
 fc_max = 4.0 * k_t * (o_max**2)  # N
 
-Tm = 0.0760  # time constant of motor  # 这个参数参考《多旋翼飞行器设计与控制》 全权
+Tm = 0.0840  # time constant of motor
+
+######################################################################################
+#   aerodynamic parameters
+######################################################################################
+# aerodynamic drag model, refer to "A Comparative Study" Sun, et al.
+kd_x = 0.26  # N s/m
+kd_y = 0.28  # N s/m
+kd_z = 0.42  # N s/m
+k_h = 0.01  # N s^2/m^2
+
+# downwash
+dw_range_horiz = 1.5  # m
+dw_range_vert = 4  # m
+rp = 0.0775  # 3.05 inch = 0.07747 m
+k_d1 = 4000
+k_d2 = 0.65
+k_d3 = -0.10
+
 
 ######################################################################################
 #   Calculation Variables

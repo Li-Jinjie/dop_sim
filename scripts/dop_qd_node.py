@@ -32,6 +32,16 @@ class DopQdNode:
         self.ts_sim = rospy.get_param(rospy.get_name() + "/ts_sim")  # time step for simulation
         self.ts_ctl = rospy.get_param(rospy.get_name() + "/ts_ctl")  # time step for inner Controller
         self.ts_viz = rospy.get_param(rospy.get_name() + "/ts_viz")  # time step for visualization
+        self.has_downwash = rospy.get_param(rospy.get_name() + "/has_downwash")
+
+        params_log = {
+            "ts_sim": "ts_sim [s]",
+            "ts_ctl": "ts_control for body rate controller [s]",
+            "ts_viz": "ts_viz [s]",
+            "has_downwash": "has_downwash",
+        }  # param_name: explanation, use for
+
+        rospy.loginfo("Load params: \n " + "\n ".join(f"- {params_log[k]}: {self.__dict__[k]}" for k in params_log))
 
         # simulation
         qd_init_states = rospy.get_param(rospy.get_name() + "/qd_init_states")  # initial states for quadrotors
@@ -40,13 +50,6 @@ class DopQdNode:
         self.ego_states, self.ego_names = self._load_init_states(qd_init_states)
         self.body_rate_cmd = self._load_init_cmd()
         self.model = self._load_model()  # Load PyTorch dynamics model
-
-        rospy.loginfo(
-            f"Load params: \n "
-            f"num_agent: {self.num_agent} \n "
-            f"sim_ts: {self.ts_sim} s \n "
-            f"control_ts for body rate controller: {self.ts_ctl} s"
-        )
 
         # control related states
         # - odometry
@@ -78,7 +81,7 @@ class DopQdNode:
 
         # visualization
         self.viz_drawer = MulQdDrawer(
-            self.num_agent, self.ego_names, True, True, True, has_rpm=True, max_krpm=24.0, min_krpm=0.0
+            self.num_agent, self.ego_names, True, True, self.has_downwash, has_rpm=True, max_krpm=24.0, min_krpm=0.0
         )
         self.marker_array_pub = rospy.Publisher("mul_qds_viz", MarkerArray, queue_size=5)
         self.viz_is_init = False
@@ -183,15 +186,16 @@ class DopQdNode:
 
         # Add realsense and gps modules: 1.5344 kg -> 0.23202; pure aircraft: 1.4844 kg -> 0.22400
         body_rate_cmd[:, 3, 0] = 0.22400  # throttle_cmd
-        # body_rate_cmd[0, 0, 0] = 0.1  # roll_rate_cmd
-        # body_rate_cmd[1, 1, 0] = 0.1  # pitch_rate_cmd
-        # body_rate_cmd[2, 2, 0] = 0.5  # yaw_rate_cmd
+        body_rate_cmd[0, 0, 0] = 0.1  # roll_rate_cmd
+        body_rate_cmd[1, 1, 0] = 0.1  # pitch_rate_cmd
+        body_rate_cmd[2, 2, 0] = 0.5  # yaw_rate_cmd
+        body_rate_cmd[3, 1, 0] = -0.05
 
         return body_rate_cmd
 
     def _load_model(self) -> torch.jit.ScriptModule:
         # Load PyTorch model here
-        mul_qd = MulQuadrotors(self.num_agent, self.ts_sim, torch.float64).requires_grad_(False)
+        mul_qd = MulQuadrotors(self.num_agent, self.ts_sim, torch.float64, self.has_downwash).requires_grad_(False)
         if torch.cuda.is_available():
             mul_qd = mul_qd.to("cuda")
         sm_mul_qd = torch.jit.script(mul_qd)  # Script model for faster inference
@@ -228,7 +232,8 @@ class TimeGuarder:
         if self.run_round == self.measure_round:
             if self.ts_sim < self.run_t / self.measure_round:
                 rospy.logwarn(
-                    f"Simulation is too slow! ts_sim: {self.ts_sim * 1000:.3f} ms < ts_one_round: {self.run_t / self.measure_round * 1000:.3f} ms"
+                    f"Simulation is too slow! ts_sim: {self.ts_sim * 1000:.3f} ms "
+                    f"< ts_one_round: {self.run_t / self.measure_round * 1000:.3f} ms"
                 )
 
             # # DEBUG only
