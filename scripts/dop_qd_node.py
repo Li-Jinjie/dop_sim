@@ -33,6 +33,7 @@ class DopQdNode:
         self.ts_ctl = rospy.get_param(rospy.get_name() + "/ts_ctl")  # time step for inner Controller
         self.ts_viz = rospy.get_param(rospy.get_name() + "/ts_viz")  # time step for visualization
         self.has_downwash = rospy.get_param(rospy.get_name() + "/has_downwash")
+        self.has_motor_model = rospy.get_param(rospy.get_name() + "/has_motor_model")
 
         params_log = {
             "ts_sim": "ts_sim [s]",
@@ -169,6 +170,7 @@ class DopQdNode:
 
         ego_states = torch.zeros([num_agent, 35, 1], dtype=torch.float64).to("cuda")
         ego_states[:, 9, 0] = 1.0  # ew
+        ego_states[:, 31:35, :] = 8  # omega, kRPM
         for i in range(num_agent):
             if "name" in qd_init_states[i]:
                 ego_names.append(qd_init_states[i]["name"])
@@ -185,9 +187,9 @@ class DopQdNode:
         body_rate_cmd = torch.zeros([self.num_agent, 4, 1], dtype=torch.float64).to("cuda")
 
         # Add realsense and gps modules: 1.5344 kg -> 0.23202; pure aircraft: 1.4844 kg -> 0.22400
-        body_rate_cmd[:, 3, 0] = 0.22400  # throttle_cmd
+        body_rate_cmd[:, 3, 0] = 0.283  # throttle_cmd
         body_rate_cmd[0, 0, 0] = 0.1  # roll_rate_cmd
-        body_rate_cmd[1, 1, 0] = 0.1  # pitch_rate_cmd
+        body_rate_cmd[1, 1, 0] = 0.0  # pitch_rate_cmd
         body_rate_cmd[2, 2, 0] = 0.5  # yaw_rate_cmd
         body_rate_cmd[3, 1, 0] = -0.05
 
@@ -195,7 +197,9 @@ class DopQdNode:
 
     def _load_model(self) -> torch.jit.ScriptModule:
         # Load PyTorch model here
-        mul_qd = MulQuadrotors(self.num_agent, self.ts_sim, torch.float64, self.has_downwash).requires_grad_(False)
+        mul_qd = MulQuadrotors(
+            self.num_agent, self.ts_sim, self.ts_ctl, torch.float64, self.has_downwash, self.has_motor_model
+        ).requires_grad_(False)
         if torch.cuda.is_available():
             mul_qd = mul_qd.to("cuda")
         sm_mul_qd = torch.jit.script(mul_qd)  # Script model for faster inference

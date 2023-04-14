@@ -11,14 +11,14 @@ Description: file content
 import torch
 import torch.nn as nn
 
-from ..params import control_param as AP
+from ..params import control_param as CP
 from .pid_control import PIDControl
 
 
 class AtpRate(nn.Module):
     def __init__(self, num_agent: int, ts_control: float, dtype=torch.float64) -> None:
         super().__init__()
-        self.G_1_inv_torch = nn.Parameter(torch.tensor(AP.G_1_inv), False)
+        self.G_1_inv_torch = nn.Parameter(torch.tensor(CP.G_1_inv), False)
 
         ts_factor = ts_control / 0.02  # 确保pid参数会随着仿真步长的改变而改变
 
@@ -29,31 +29,31 @@ class AtpRate(nn.Module):
             num_agent,
             dtype=dtype,
             Ts=ts_control,
-            kp=AP.roll_rate_kp,
-            ki=AP.roll_rate_ki / ts_factor,
-            kd=AP.roll_rate_kd * ts_factor,
-            sigma=AP.sigma,
-            u_limit=100,
+            kp=CP.roll_rate_kp,
+            ki=CP.roll_rate_ki / ts_factor,
+            kd=CP.roll_rate_kd * ts_factor,
+            sigma=CP.sigma,
+            u_limit=999.0,
         )
         self.My_from_pitch_rate = PIDControl(
             num_agent,
             dtype=dtype,
             Ts=ts_control,
-            kp=AP.pitch_rate_kp,
-            ki=AP.pitch_rate_ki / ts_factor,
-            kd=AP.pitch_rate_kd * ts_factor,
-            sigma=AP.sigma,
-            u_limit=100,
+            kp=CP.pitch_rate_kp,
+            ki=CP.pitch_rate_ki / ts_factor,
+            kd=CP.pitch_rate_kd * ts_factor,
+            sigma=CP.sigma,
+            u_limit=999.0,
         )
         self.Mz_from_yaw_rate = PIDControl(
             num_agent,
             dtype=dtype,
             Ts=ts_control,
-            kp=AP.yaw_rate_kp,
-            ki=AP.yaw_rate_ki / ts_factor,
-            kd=AP.yaw_rate_kd * ts_factor,
-            sigma=AP.sigma,
-            u_limit=100,
+            kp=CP.yaw_rate_kp,
+            ki=CP.yaw_rate_ki / ts_factor,
+            kd=CP.yaw_rate_kd * ts_factor,
+            sigma=CP.sigma,
+            u_limit=999.0,
         )
 
     def forward(self, ego_states: torch.Tensor, cmd: torch.Tensor):
@@ -75,25 +75,12 @@ class AtpRate(nn.Module):
         yaw_rate_cmd = cmd[:, 2:3, :]
         throttle_cmd = cmd[:, 3:4, :]
 
-        # vx = ego_states[:, 13:14, :]
-        # vy = ego_states[:, 14:15, :]
-        # vz = ego_states[:, 15:16, :]
-
-        # chi = ego_states[:, 27:28, :]
-
-        # phi = ego_states[:, 6:7, :]
-        # theta = ego_states[:, 7:8, :]
-        # psi = ego_states[:, 8:9, :]
-
         p = ego_states[:, 19:20, :]
         q = ego_states[:, 20:21, :]
         r = ego_states[:, 21:22, :]
 
-        # altitude = -ego_states[:, 5:6, :]
-        # Va = ego_states[:, 22:23, :]
-
         # vertical
-        thrust_cmd = throttle_cmd * AP.fc_max
+        thrust_cmd = 4 * (throttle_cmd * CP.k_th + CP.b_th)
 
         # ------- attitude_rate_loop --------
         torque_x_cmd = self.Mx_from_roll_rate(roll_rate_cmd, p)
@@ -109,7 +96,7 @@ class AtpRate(nn.Module):
         thrust_per_motor[thrust_per_motor < 0] = 0
 
         # thrust_per_motor = ct * omega ** 2
-        delta = torch.sqrt(thrust_per_motor / AP.k_t)
+        delta = torch.sqrt(thrust_per_motor / CP.k_t)
 
         return delta
 

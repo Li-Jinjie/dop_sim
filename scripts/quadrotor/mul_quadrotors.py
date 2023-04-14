@@ -17,10 +17,18 @@ from .b_autopilot import AtpRate
 
 
 class MulQuadrotors(nn.Module):
-    def __init__(self, num_agent: int, ts_control: float, dtype=torch.float64, has_downwash=True):
+    def __init__(
+        self,
+        num_agent: int,
+        ts_sim: float,
+        ts_control: float,
+        dtype=torch.float64,
+        has_downwash=True,
+        has_motor_model=True,
+    ):
         super().__init__()
         self.autopilot = AtpRate(num_agent, ts_control, dtype)
-        self.dynamics = QdDynamics(has_downwash)
+        self.dynamics = QdDynamics(ts_sim, has_downwash, has_motor_model)
 
         self.ts_ctl = ts_control
         self.ctl_t = 999.0

@@ -62,11 +62,15 @@ def _update_other_states(state: torch.Tensor, r_mtx: torch.Tensor):
 
 
 class QdDynamics(nn.Module):
-    def __init__(self, has_downwash):
+    def __init__(self, ts_sim, has_downwash, has_motor_model):
         super().__init__()
         self.G_1_torch = nn.Parameter(torch.tensor(QMAV.G_1), False)
         self.ode_rigid_body = ODE(RigidBodyUseVw)
+
         self.has_downwash = has_downwash
+        self.has_motor_model = has_motor_model
+
+        self.motor_alpha = math.exp(-ts_sim / QMAV.Tm)
 
     def forward(self, dt: float, state: torch.Tensor, delta: torch.Tensor):
         """
@@ -79,6 +83,9 @@ class QdDynamics(nn.Module):
         p, q, r, Va, Vg, alpha, beta, gamma, chi, wn, we, wd, o1, o2, o3, o4]
         input = [fx, fy, fz, l, m, n]
         """
+        if self.has_motor_model:
+            delta = self._motor_model(state, delta)
+
         # get forces and torques acting on rigid body
         state, forces_i_torques_b, r_mtx = self._update_forces_torques(state, delta)
 
@@ -100,7 +107,7 @@ class QdDynamics(nn.Module):
         """
 
         # compute propeller thrust and torque
-        thrust_torque = self._motor_model(delta)
+        thrust_torque = self._rotor_model(delta)
 
         f_c = thrust_torque[:, 0:1, :]
 
@@ -214,8 +221,14 @@ class QdDynamics(nn.Module):
 
         return state
 
-    def _motor_model(self, delta: torch.Tensor) -> torch.Tensor:
-        """quadratic motor model"""
+    def _motor_model(self, state: torch.Tensor, delta_cmd: torch.Tensor) -> torch.Tensor:
+        # first-order system, which can be represented as a low-pass filter
+        delta_real = state[:, 31:35, :]
+        delta_real = self.motor_alpha * delta_real + (1 - self.motor_alpha) * delta_cmd
+        return delta_real
+
+    def _rotor_model(self, delta: torch.Tensor) -> torch.Tensor:
+        """quadratic rotor model"""
         # delta = [o1, o2, o3, o4]
         # thrust_torque = [thrust, torque_x, torque_y, torque_z]
 
@@ -228,9 +241,9 @@ class QdDynamics(nn.Module):
         o3 = delta[:, 2:3, :]
         o4 = delta[:, 3:4, :]
 
-        thrust_per_motor = QMAV.k_t * torch.cat((o1**2, o2**2, o3**2, o4**2), 1)
+        thrust_per_rotor = QMAV.k_t * torch.cat((o1**2, o2**2, o3**2, o4**2), 1)
 
-        thrust_torque = self.G_1_torch @ thrust_per_motor
+        thrust_torque = self.G_1_torch @ thrust_per_rotor
 
         return thrust_torque
 
