@@ -13,7 +13,6 @@ import os
 current_path = os.path.abspath(os.path.dirname(__file__))
 sys.path.insert(0, current_path)
 
-import copy
 import time
 import rospy
 import torch
@@ -95,11 +94,11 @@ class DopQdNode:
 
         # register various timers
         # note that the callback function will be passed a rospy.timer.TimerEvent object after self
-        rospy.Timer(rospy.Duration(self.ts_sim), self.sim_loop_callback)
-        rospy.Timer(rospy.Duration(self.ts_viz), self.pub_viz_callback)
-        rospy.Timer(rospy.Duration(1 / 100), self.pub_odom_callback)
-        rospy.Timer(rospy.Duration(1 / 50), self.pub_esc_callback)
-        rospy.Timer(rospy.Duration(1), self.pub_state_callback)
+        self.tmr_sim = rospy.Timer(rospy.Duration(self.ts_sim), self.sim_loop_callback)
+        self.tmr_viz = rospy.Timer(rospy.Duration(self.ts_viz), self.pub_viz_callback)
+        self.tmr_pub_odom = rospy.Timer(rospy.Duration(1 / 100), self.pub_odom_callback)
+        self.tmr_pub_esc = rospy.Timer(rospy.Duration(1 / 50), self.pub_esc_callback)
+        self.tmr_pub_px4_state = rospy.Timer(rospy.Duration(1), self.pub_state_callback)
 
         # register subscriber
         for i in range(self.num_agent):
