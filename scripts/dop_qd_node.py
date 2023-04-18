@@ -75,7 +75,7 @@ class DopQdNode:
         # - state
         state = State()
         state.mode = "OFFBOARD"
-        state.armed = False
+        state.armed = True
         state.connected = True
         self.mul_state = [state] * self.num_agent
         self.mul_state_pub = []
@@ -103,7 +103,7 @@ class DopQdNode:
         # register subscriber
         for i in range(self.num_agent):
             rospy.Subscriber(
-                f"/{self.ego_names[i]}/mavros/setpoint_raw/attitude", AttitudeTarget, self.body_rate_cmd_callback, i
+                f"/{self.ego_names[i]}/mavros/setpoint_raw/attitude", AttitudeTarget, self.sub_body_rate_cmd_cb, i
             )
 
         rospy.loginfo("Start simulation!")
@@ -159,7 +159,7 @@ class DopQdNode:
             self.mul_state[i].header.stamp = rospy.Time.now()
             self.mul_state_pub[i].publish(self.mul_state[i])
 
-    def body_rate_cmd_callback(self, msg: AttitudeTarget, i: int) -> None:
+    def sub_body_rate_cmd_cb(self, msg: AttitudeTarget, i: int) -> None:
         self.body_rate_cmd[i][0][0] = msg.body_rate.x
         self.body_rate_cmd[i][1][0] = msg.body_rate.y
         self.body_rate_cmd[i][2][0] = msg.body_rate.z
@@ -171,7 +171,7 @@ class DopQdNode:
         ego_names = []
 
         ego_states = torch.zeros([num_agent, 35, 1], dtype=torch.float64).to("cuda")
-        ego_states[:, 9, 0] = 1.0  # ew
+        ego_states[:, 9, 0] = -1.0  # ew  -1.0 is compatible with PX4. If use 1.0, the quadrotor will rotate.
         ego_states[:, 31:35, :] = 8  # omega, kRPM
         for i in range(num_agent):
             if "name" in qd_init_states[i]:
@@ -190,10 +190,10 @@ class DopQdNode:
 
         # Add realsense and gps modules: 1.5344 kg -> 0.23202; pure aircraft: 1.4844 kg -> 0.22400
         body_rate_cmd[:, 3, 0] = 0.283  # throttle_cmd
-        body_rate_cmd[0, 0, 0] = 0.1  # roll_rate_cmd
-        body_rate_cmd[1, 1, 0] = 0.0  # pitch_rate_cmd
-        body_rate_cmd[2, 2, 0] = 0.5  # yaw_rate_cmd
-        body_rate_cmd[3, 1, 0] = -0.05
+        # body_rate_cmd[0, 0, 0] = 0.1  # roll_rate_cmd
+        # body_rate_cmd[1, 1, 0] = 0.0  # pitch_rate_cmd
+        # body_rate_cmd[2, 2, 0] = 0.5  # yaw_rate_cmd
+        # body_rate_cmd[3, 1, 0] = -0.05
 
         return body_rate_cmd
 
