@@ -1,4 +1,4 @@
-ts_sim: 0.005
+ts_sim: 0.01
 ts_ctl: 0.01
 ts_viz: 0.05
 

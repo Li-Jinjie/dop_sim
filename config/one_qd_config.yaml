@@ -12,11 +12,6 @@ has_battery: True
 qd_init_states:
   - name: "fhnp"
     init_pos:
-      - -2.0 # px
+      - 1.0 # px
       - 1.0 # py
       - 0.5 # pz
-  - name: "xiao_feng"
-    init_pos:
-      - -2.0 # px
-      - -1.0 # py
-      - 1.5 # pz

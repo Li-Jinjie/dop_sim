@@ -51,6 +51,7 @@ class DopQdNode:
         self.num_agent = len(qd_init_states)  # number of quadrotors
 
         self.ego_states, self.ego_names = self._load_init_states(qd_init_states)
+        rospy.loginfo(f"Load {self.num_agent} quadrotors: {self.ego_names}")
         self.body_rate_cmd = self._load_init_cmd()
         self.model = self._load_model()  # Load PyTorch dynamics model
 
@@ -89,9 +90,6 @@ class DopQdNode:
         self.marker_array_pub = rospy.Publisher("mul_qds_viz", MarkerArray, queue_size=5)
         self.viz_is_init = False
 
-        # timer for various frequencies  # TODO: delete this
-        self.time_guarder = TimeGuarder(ts_sim=self.ts_sim, ts_measure=5)
-
         # register various timers
         # note that the callback function will be passed a rospy.timer.TimerEvent object after self
         self.tmr_sim = rospy.Timer(rospy.Duration(self.ts_sim), self.sim_loop_callback)
@@ -114,14 +112,16 @@ class DopQdNode:
                  p, q, r, Va, Vg, alpha, beta, gamma, chi, wn, we, wd]   len=31
         cmd: ["roll_rate_cmd", "pitch_rate_cmd", "yaw_rate_cmd", "throttle_cmd"]
         """
-
-        time_a = time.perf_counter()
+        # ----- check if simulation is too slow -----
+        if timer.last_duration is not None and self.ts_sim < timer.last_duration:
+            rospy.logwarn(
+                f"Simulation is too slow!"
+                f"ts_sim: {self.ts_sim * 1000:.3f} ms < ts_one_round: {timer.last_duration * 1000:.3f} ms"
+            )
+        # ------------------------------------------
 
         # low_level controller and dynamics
         self.ego_states = self._run_model(self.ego_states, self.body_rate_cmd)
-
-        time_b = time.perf_counter()
-        self.time_guarder.measure_run_t(time_b - time_a)
 
     def pub_viz_callback(self, timer: rospy.timer.TimerEvent) -> None:
         # rospy.loginfo("Publish points for one round!")
@@ -223,39 +223,6 @@ class DopQdNode:
         # Run PyTorch model and get output tensor
         new_ego_states = self.model(self.ts_sim, ego_states, body_rate_cmd)
         return new_ego_states
-
-
-class TimeGuarder:
-    def __init__(self, ts_sim: float, ts_measure: float = 1):
-        self.measure_round = ts_measure / ts_sim
-        self.ts_sim = ts_sim
-
-        self.run_round = 0
-        self.run_t = 0.0
-        self.clear_run_t()
-
-    def clear_run_t(self):
-        self.run_round = 0
-        self.run_t = 0.0
-
-    def measure_run_t(self, t_one_round: float):
-        self.run_t += t_one_round
-        self.run_round += 1
-        if self.run_round == self.measure_round:
-            if self.ts_sim < self.run_t / self.measure_round:
-                rospy.logwarn(
-                    f"Simulation is too slow! ts_sim: {self.ts_sim * 1000:.3f} ms "
-                    f"< ts_one_round: {self.run_t / self.measure_round * 1000:.3f} ms"
-                )
-
-            # # DEBUG only
-            # rospy.loginfo(
-            #     f"Average running time for {self.measure_round} rounds: {self.run_t / self.measure_round * 1000:.3f} ms \n"
-            #     f"Time step for simulation is {self.ts_sim * 1000:.3f} ms \n"
-            #     f"Real time simulation is {self.ts_sim > self.run_t / self.measure_round} !"
-            # )
-
-            self.clear_run_t()
 
 
 if __name__ == "__main__":
