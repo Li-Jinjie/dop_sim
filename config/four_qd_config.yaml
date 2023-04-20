@@ -1,0 +1,32 @@
+ts_sim: 0.01
+ts_ctl: 0.01
+ts_viz: 0.05
+
+# time_factor: 1.0  # only 1x simulation is supported now
+
+has_downwash: True
+has_motor_model: True
+has_battery: True
+
+# ned frame
+qd_init_states:
+  - name: "fhnp"
+    init_pos:
+      - 1.0 # px
+      - 1.0 # py
+      - 0.5 # pz
+  - name: "xiao_feng"
+    init_pos:
+      - -2.0 # px
+      - -1.0 # py
+      - 1.5 # pz
+  - name: "smile_boy"
+    init_pos:
+      - 0.0 # px
+      - 1.0 # py
+      - 1.5 # pz
+  - name: "wan_yue"
+    init_pos:
+      - -2.0 # px
+      - 1.0 # py
+      - 2.0 # pz
