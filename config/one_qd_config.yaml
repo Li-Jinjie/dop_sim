@@ -8,10 +8,10 @@ has_downwash: True
 has_motor_model: True
 has_battery: True
 
-# ned frame
+# enu frame
 qd_init_states:
   - name: "fhnp"
     init_pos:
       - 1.0 # px
       - 1.0 # py
-      - 0.5 # pz
+      - 5.0 # pz

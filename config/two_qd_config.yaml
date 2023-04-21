@@ -8,7 +8,7 @@ has_downwash: True
 has_motor_model: True
 has_battery: True
 
-# ned frame
+# enu frame
 qd_init_states:
   - name: "fhnp"
     init_pos:

@@ -8,7 +8,8 @@ has_downwash: True
 has_motor_model: True
 has_battery: True
 
-# ned frame
+# three qd are fixed, one qd is tracking the trajectory. test the downwash effect
+# enu frame
 qd_init_states:
   - name: "fhnp"
     init_pos:
@@ -17,16 +18,16 @@ qd_init_states:
       - 0.5 # pz
   - name: "xiao_feng"
     init_pos:
-      - -2.0 # px
-      - -1.0 # py
-      - 1.5 # pz
+      - 3.0 # px
+      - 2.0 # py
+      - 1.0 # pz
   - name: "smile_boy"
     init_pos:
-      - 0.0 # px
+      - 5.0 # px
       - 1.0 # py
-      - 1.5 # pz
+      - 1.0 # pz
   - name: "wan_yue"
     init_pos:
-      - -2.0 # px
-      - 1.0 # py
-      - 2.0 # pz
+      - 3.0 # px
+      - 0.3 # py
+      - 1.0 # pz
