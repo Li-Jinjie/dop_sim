@@ -20,14 +20,14 @@ qd_init_states:
     init_pos:
       - 3.0 # px
       - 2.0 # py
-      - 1.0 # pz
+      - 1.5 # pz
   - name: "smile_boy"
     init_pos:
       - 5.0 # px
       - 1.0 # py
-      - 1.0 # pz
+      - 1.4 # pz
   - name: "wan_yue"
     init_pos:
       - 3.0 # px
       - 0.3 # py
-      - 1.0 # pz
+      - 1.5 # pz
