@@ -18,7 +18,7 @@ This simulator only contains dynamics and body rate controller, and it leverages
 5. `git clone https://github.com/Li-Jinjie/dop_qd_sim.git`
 6. `catkin build` to build the whole workspace. Done!
 
-## Getting Start
+## Getting Started
 
 Before each running:  `cd /path_to_workspace` and then `source devel/setup.bash`
 
