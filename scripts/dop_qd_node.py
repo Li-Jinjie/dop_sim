@@ -131,7 +131,7 @@ class DopQdNode:
     def pub_odom_callback(self, timer: rospy.timer.TimerEvent) -> None:
         for i in range(self.num_agent):
             self.mul_odom[i].header.stamp = rospy.Time.now()
-            self.mul_odom[i].header.frame_id = "odom"
+            self.mul_odom[i].header.frame_id = "map"
             self.mul_odom[i].pose.pose.position.x = self.ego_states[i][3][0]  # e
             self.mul_odom[i].pose.pose.position.y = self.ego_states[i][4][0]  # n
             self.mul_odom[i].pose.pose.position.z = self.ego_states[i][5][0]  # u
