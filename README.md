@@ -22,9 +22,9 @@ This simulator only contains dynamics and body rate controller, and it leverages
 
 Before each running:  `cd /path_to_workspace` and then `source devel/setup.bash`
 
-- If you want to make one quadrotor fly, just run `roslaunch one_qd_config.yaml`
-- If you want to make three quadrotor fly, just run `roslaunch three_qd_config.yaml`
-- If you want to make multiple quadrotors fly, just run `roslaunch mul_qd_config.yaml`, and please change mul_qd_config.yaml as you wish.
+- If you want to make one quadrotor fly, just run `roslaunch mul_qd_w_rviz.launch config_file:=one_qd_config.yaml`
+- If you want to make three quadrotor fly, just run `roslaunch mul_qd_w_rviz.launch config_file:=three_qd_config.yaml`
+- If you want to make multiple quadrotors fly, just run `roslaunch mul_qd_w_rviz.launch config_file:=mul_qd_config.yaml`, and please change mul_qd_config.yaml as you wish.
 
 ## How to measure model time (optional)
 
