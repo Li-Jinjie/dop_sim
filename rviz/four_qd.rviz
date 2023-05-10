@@ -9,12 +9,16 @@ Panels:
         - /MarkerArray1
         - /MarkerArray1/Namespaces1
         - /PoseArray1
-        - /PoseArray1/Status1
         - /Path1
         - /Path2
         - /Path3
+        - /PoseArray2
         - /Odometry1
         - /Odometry1/Shape1
+        - /Odometry2
+        - /Odometry2/Shape1
+        - /Odometry3
+        - /Odometry3/Shape1
       Splitter Ratio: 0.5
     Tree Height: 746
   - Class: rviz/Selection
@@ -65,7 +69,10 @@ Visualization Manager:
       Marker Topic: /mul_qds_viz
       Name: MarkerArray
       Namespaces:
-        {}
+        fhnp: true
+        smile_boy: true
+        wan_yue: true
+        xiao_feng: true
       Queue Size: 1
       Value: true
     - Alpha: 1
@@ -74,7 +81,7 @@ Visualization Manager:
       Axes Radius: 0.009999999776482582
       Class: rviz/PoseArray
       Color: 255; 25; 0
-      Enabled: true
+      Enabled: false
       Head Length: 0.07000000029802322
       Head Radius: 0.029999999329447746
       Name: PoseArray
@@ -82,9 +89,9 @@ Visualization Manager:
       Shaft Length: 0.23000000417232513
       Shaft Radius: 0.009999999776482582
       Shape: Axes
-      Topic: /fhnp/traj_tracker/viz_pred
+      Topic: /xiao_feng/traj_tracker/viz_pred
       Unreliable: false
-      Value: true
+      Value: false
     - Alpha: 1
       Buffer Length: 1
       Class: rviz/Path
@@ -106,7 +113,7 @@ Visualization Manager:
       Radius: 0.029999999329447746
       Shaft Diameter: 0.10000000149011612
       Shaft Length: 0.10000000149011612
-      Topic: /path_planner/path
+      Topic: /path_planner/viz_path
       Unreliable: false
       Value: true
     - Alpha: 1
@@ -117,7 +124,7 @@ Visualization Manager:
       Head Diameter: 0.30000001192092896
       Head Length: 0.20000000298023224
       Length: 0.30000001192092896
-      Line Style: Lines
+      Line Style: Billboards
       Line Width: 0.029999999329447746
       Name: Path
       Offset:
@@ -130,7 +137,7 @@ Visualization Manager:
       Radius: 0.029999999329447746
       Shaft Diameter: 0.10000000149011612
       Shaft Length: 0.10000000149011612
-      Topic: /path_planner/traj
+      Topic: path_planner/viz_traj/
       Unreliable: false
       Value: true
     - Alpha: 1
@@ -154,7 +161,7 @@ Visualization Manager:
       Radius: 0.029999999329447746
       Shaft Diameter: 0.10000000149011612
       Shaft Length: 0.10000000149011612
-      Topic: /path_planner/lab_area
+      Topic: path_planner/viz_lab_area/
       Unreliable: false
       Value: true
     - Class: rviz/TF
@@ -164,6 +171,16 @@ Visualization Manager:
       Frame Timeout: 15
       Frames:
         All Enabled: true
+        fhnp/base_link:
+          Value: true
+        map:
+          Value: true
+        smile_boy/base_link:
+          Value: true
+        wan_yue/base_link:
+          Value: true
+        xiao_feng/base_link:
+          Value: true
       Marker Alpha: 1
       Marker Scale: 1
       Name: TF
@@ -171,8 +188,68 @@ Visualization Manager:
       Show Axes: true
       Show Names: true
       Tree:
-        {}
+        map:
+          fhnp/base_link:
+            {}
+          smile_boy/base_link:
+            {}
+          wan_yue/base_link:
+            {}
+          xiao_feng/base_link:
+            {}
       Update Interval: 0
+      Value: true
+    - Alpha: 1
+      Arrow Length: 0.30000001192092896
+      Axes Length: 0.30000001192092896
+      Axes Radius: 0.009999999776482582
+      Class: rviz/PoseArray
+      Color: 255; 25; 0
+      Enabled: false
+      Head Length: 0.07000000029802322
+      Head Radius: 0.029999999329447746
+      Name: PoseArray
+      Queue Size: 10
+      Shaft Length: 0.23000000417232513
+      Shaft Radius: 0.009999999776482582
+      Shape: Axes
+      Topic: /fhnp/traj_tracker/viz_pred
+      Unreliable: false
+      Value: false
+    - Angle Tolerance: 0.10000000149011612
+      Class: rviz/Odometry
+      Covariance:
+        Orientation:
+          Alpha: 0.5
+          Color: 255; 255; 127
+          Color Style: Unique
+          Frame: Local
+          Offset: 1
+          Scale: 1
+          Value: true
+        Position:
+          Alpha: 0.30000001192092896
+          Color: 204; 51; 204
+          Scale: 1
+          Value: true
+        Value: true
+      Enabled: true
+      Keep: 20
+      Name: Odometry
+      Position Tolerance: 0.10000000149011612
+      Queue Size: 10
+      Shape:
+        Alpha: 1
+        Axes Length: 0.10000000149011612
+        Axes Radius: 0.009999999776482582
+        Color: 255; 25; 0
+        Head Length: 0.30000001192092896
+        Head Radius: 0.10000000149011612
+        Shaft Length: 1
+        Shaft Radius: 0.05000000074505806
+        Value: Axes
+      Topic: /xiao_feng/mavros/local_position/odom
+      Unreliable: false
       Value: true
     - Angle Tolerance: 0.10000000149011612
       Class: rviz/Odometry
@@ -192,14 +269,14 @@ Visualization Manager:
           Value: true
         Value: true
       Enabled: true
-      Keep: 50
+      Keep: 20
       Name: Odometry
       Position Tolerance: 0.10000000149011612
       Queue Size: 10
       Shape:
         Alpha: 1
-        Axes Length: 1
-        Axes Radius: 0.10000000149011612
+        Axes Length: 0.10000000149011612
+        Axes Radius: 0.009999999776482582
         Color: 255; 25; 0
         Head Length: 0.30000001192092896
         Head Radius: 0.10000000149011612
@@ -207,6 +284,41 @@ Visualization Manager:
         Shaft Radius: 0.05000000074505806
         Value: Axes
       Topic: /fhnp/mavros/local_position/odom
+      Unreliable: false
+      Value: true
+    - Angle Tolerance: 0.10000000149011612
+      Class: rviz/Odometry
+      Covariance:
+        Orientation:
+          Alpha: 0.5
+          Color: 255; 255; 127
+          Color Style: Unique
+          Frame: Local
+          Offset: 1
+          Scale: 1
+          Value: true
+        Position:
+          Alpha: 0.30000001192092896
+          Color: 204; 51; 204
+          Scale: 1
+          Value: true
+        Value: true
+      Enabled: true
+      Keep: 20
+      Name: Odometry
+      Position Tolerance: 0.10000000149011612
+      Queue Size: 10
+      Shape:
+        Alpha: 1
+        Axes Length: 0.10000000149011612
+        Axes Radius: 0.009999999776482582
+        Color: 255; 25; 0
+        Head Length: 0.30000001192092896
+        Head Radius: 0.10000000149011612
+        Shaft Length: 1
+        Shaft Radius: 0.05000000074505806
+        Value: Axes
+      Topic: /smile_boy/mavros/local_position/odom
       Unreliable: false
       Value: true
   Enabled: true
@@ -237,7 +349,7 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 8.140233993530273
+      Distance: 6.873231410980225
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
@@ -245,17 +357,17 @@ Visualization Manager:
         Value: false
       Field of View: 0.7853981852531433
       Focal Point:
-        X: -0.17247407138347626
-        Y: 1.6650054454803467
-        Z: 0.710477888584137
-      Focal Shape Fixed Size: true
+        X: 1.3760215044021606
+        Y: 0.5243111848831177
+        Z: 0.2725123167037964
+      Focal Shape Fixed Size: false
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 0.7853995561599731
+      Pitch: 0.30479711294174194
       Target Frame: <Fixed Frame>
-      Yaw: 1.6772481203079224
+      Yaw: 3.419961452484131
     Saved: ~
 Window Geometry:
   Displays:
