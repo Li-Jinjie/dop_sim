@@ -108,9 +108,9 @@ sec_alpha_div_4_l_frame = 1 / (4 * l_frame * np.cos(alpha))
 
 G_1_inv = np.array(
     [
-        [1 / 4, csc_alpha_div_4_l_frame, -sec_alpha_div_4_l_frame, k_t / (4 * k_q)],
         [1 / 4, -csc_alpha_div_4_l_frame, -sec_alpha_div_4_l_frame, -k_t / (4 * k_q)],
-        [1 / 4, -csc_alpha_div_4_l_frame, sec_alpha_div_4_l_frame, k_t / (4 * k_q)],
         [1 / 4, csc_alpha_div_4_l_frame, sec_alpha_div_4_l_frame, -k_t / (4 * k_q)],
+        [1 / 4, csc_alpha_div_4_l_frame, -sec_alpha_div_4_l_frame, k_t / (4 * k_q)],
+        [1 / 4, -csc_alpha_div_4_l_frame, sec_alpha_div_4_l_frame, k_t / (4 * k_q)],
     ]
 )

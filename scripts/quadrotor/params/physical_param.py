@@ -90,9 +90,9 @@ l_c_alpha = l_frame * np.cos(alpha_frame)
 G_1 = np.array(
     [
         [1, 1, 1, 1],
-        [l_s_alpha, -l_s_alpha, -l_s_alpha, l_s_alpha],
-        [-l_c_alpha, -l_c_alpha, l_c_alpha, l_c_alpha],
-        [k_q / k_t, -k_q / k_t, k_q / k_t, -k_q / k_t],
+        [-l_s_alpha, l_s_alpha, l_s_alpha, -l_s_alpha],
+        [-l_c_alpha, l_c_alpha, -l_c_alpha, l_c_alpha],
+        [-k_q / k_t, -k_q / k_t, k_q / k_t, k_q / k_t],
     ]
 )
 
