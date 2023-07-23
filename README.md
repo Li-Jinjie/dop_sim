@@ -14,7 +14,7 @@ This simulator only contains dynamics and body rate controller, and it leverages
 2. install PyTorch with GPU option following https://pytorch.org/get-started/locally/
 
 3. Create a workspace for ROS noetic, then go to the /src
-4. `git clone https://github.com/mavlink/mavros.git`. Here we only need mavros/mavros_msgs folder.
+4. `sudo apt install ros-noetic-mavros_msgs`
 5. `git clone https://github.com/Li-Jinjie/dop_qd_sim.git`
 6. `catkin build` to build the whole workspace. Done!
 
