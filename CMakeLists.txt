@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.0.2)
-project(dop_qd_sim)
+project(dop_sim)
 
 ## Compile as C++11, supported in ROS Kinetic and newer
 # add_compile_options(-std=c++11)
@@ -100,7 +100,7 @@ find_package(catkin REQUIRED COMPONENTS roscpp rospy std_msgs geometry_msgs visu
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
 #  INCLUDE_DIRS include
-#  LIBRARIES dop_qd_sim
+#  LIBRARIES dop_sim
 #  CATKIN_DEPENDS other_catkin_pkg
 #  DEPENDS system_lib
 )
@@ -120,7 +120,7 @@ catkin_package(
 
 ## Declare a C++ library
 # add_library(${PROJECT_NAME}
-#   src/${PROJECT_NAME}/dop_qd_sim.cpp
+#   src/${PROJECT_NAME}/dop_sim.cpp
 # )
 
 ## Add cmake target dependencies of the library
@@ -211,7 +211,7 @@ catkin_package(
 #############
 
 ## Add gtest based cpp test target and link libraries
-# catkin_add_gtest(${PROJECT_NAME}-test test/test_dop_qd_sim.cpp)
+# catkin_add_gtest(${PROJECT_NAME}-test test/test_dop_sim.cpp)
 # if(TARGET ${PROJECT_NAME}-test)
 #   target_link_libraries(${PROJECT_NAME}-test ${PROJECT_NAME})
 # endif()

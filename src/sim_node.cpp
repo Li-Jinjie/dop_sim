@@ -10,7 +10,7 @@
 int main(int argc, char **argv) {
 
 //    // ROS based code
-//    ros::init(argc, argv, "dop_qd_sim");
+//    ros::init(argc, argv, "dop_sim");
 //
 //    ros::NodeHandle n;
 //
@@ -25,7 +25,7 @@ int main(int argc, char **argv) {
     try {
         // Deserialize the ScriptModule from a file using torch::jit::load().
 //        module = torch::jit::load("./models/mul_qd_model.pt");
-        module = torch::jit::load("/home/lijinjie/ljj_ws/src/dop_qd_sim/models/mul_qd_model.pt");
+        module = torch::jit::load("/home/lijinjie/ljj_ws/src/dop_sim/models/mul_qd_model.pt");
     }
     catch (const c10::Error &e) {
         std::cerr << "error loading the model\n";
