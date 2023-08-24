@@ -69,7 +69,6 @@ class TransferFunction(nn.Module):
         y = self.C @ self.state + self.D * u
         return y
 
-    # TODO: 与ode.py合并
     def rk4_step(self, u):
         # Integrate ODE using Runge-Kutta 4 algorithm
         F1 = self.f(self.state, u)
