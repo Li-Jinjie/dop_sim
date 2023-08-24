@@ -1,0 +1,51 @@
+<launch>
+    <!--  dynamics  -->
+    <arg name="config_file" default="two_qd_config.yaml" />
+    <node pkg="dop_sim" type="dop_qd_node.py" name="qd_sim" output="screen">
+        <rosparam command="load" file="$(find dop_sim)/config/$(arg config_file)"/>
+    </node>
+
+    <!--  rviz   -->
+    <arg name="has_rviz" default="true" />
+    <arg name="rviz_file" default="two_qd.rviz" />
+    <group if="$(arg has_rviz)">
+        <node pkg="rviz" type="rviz" name="rviz" args="-d $(find dop_sim)/rviz/$(arg rviz_file)" respawn="false" output="screen"/>
+    </group>
+
+    <!--  plotjuggler   -->
+    <arg name="has_plotjuggler" default="false" />
+    <group if="$(arg has_plotjuggler)">
+        <node pkg="plotjuggler" type="plotjuggler" name="plotjuggler" respawn="false" output="screen"/>
+    </group>
+
+    <!--  octomap  -->
+    <arg name="has_octomap" default="true" />
+    <arg name="map_file" default="yicheng_world.bt" />
+    <group if="$(arg has_octomap)">
+        <node pkg="octomap_server" type="octomap_server_node" name="octomap_server" output="screen">
+            <param name="map_file" value="$(find dop_sim)/octomaps/$(arg map_file)"/>
+            <param name="frame_id" value="map"/>
+            <param name="resolution" value="0.05"/>
+            <param name="publish_free_space" value="false"/>
+            <param name="color_factor" value="0.8"/>
+            <param name="occupancy_thres" value="0.5"/>
+<!--             <param name="sensor_model/max_range" value="4.0"/> -->
+<!--             <param name="sensor_model/min_range" value="0.1"/> -->
+<!--             <param name="sensor_model/hit" value="0.7"/> -->
+<!--             <param name="sensor_model/hit_sigma" value="0.4"/> -->
+<!--             <param name="sensor_model/miss" value="0.4"/> -->
+<!--             <param name="sensor_model/miss_sigma" value="0.2"/> -->
+<!--             <param name="sensor_model/min_z" value="-0.8"/> -->
+<!--             <param name="sensor_model/max_z" value="2.0"/> -->
+<!--             <param name="sensor_model/raytrace_steps" value="10"/> -->
+<!--             <param name="sensor_model/pointcloud_min_x" value="-10.0"/> -->
+<!--             <param name="sensor_model/pointcloud_max_x" value="10.0"/> -->
+<!--             <param name="sensor_model/pointcloud_min_y" value="-10.0"/> -->
+<!--             <param name="sensor_model/pointcloud_max_y" value="10.0"/> -->
+<!--             <param name="sensor_model/pointcloud_min_z" value="-10.0"/> -->
+<!--             <param name="sensor_model/pointcloud_max_z" value="10.0"/> -->
+<!--             <param name="sensor_model/pointcloud_topic" value="/qd_sim/pointcloud"/> -->
+        </node>
+    </group>
+
+</launch>

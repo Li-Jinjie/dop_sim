@@ -249,3 +249,8 @@ CATKIN_IGNORE
 
 ######################### For Me ##################
 /archives
+
+# octomap
+*.bt
+*.ot
+*.gz
