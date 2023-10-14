@@ -19,7 +19,7 @@
     </group>
 
     <!--  octomap  -->
-    <arg name="has_octomap" default="true" />
+    <arg name="has_octomap" default="false" />
     <arg name="map_file" default="yicheng_world.bt" />
     <group if="$(arg has_octomap)">
         <node pkg="octomap_server" type="octomap_server_node" name="octomap_server" output="screen">

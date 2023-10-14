@@ -4,9 +4,18 @@ DOP SIM is a simulator using DOP (Data-oriented Programming) paradigm, supportin
 
 <img src="./figs/triangle_sim.gif" align="LEFT" alt="dop_sim" style="zoom: 150%;" />
 
-This simulator only contains dynamics and body rate controller, and it leverages mavros_msgs as communication protocol, aiming to be compatible with MAVROS. If you want to achieve the effect in that gif, including trajectory generation and control, please visit my other repositories [link].
+This simulator only contains dynamics and body rate controller, and it leverages mavros_msgs as communication protocol, aiming to be compatible with MAVROS. If you want to achieve the effect in above gif, including trajectory generation and control, please visit another repositories [link].
 
-[TOC]
+## Citation
+
+> ```
+> @INPROCEEDINGS{author={Li, Jinjie and Han, Liang and Yu, Haoyang and Wang, Zhaotian and Yang, Pengzhi and Yan, Ziwei and Ren, Zhang},
+>   booktitle={ICRA 2023 Workshop on The Role of Robotics Simulators for Unmanned Aerial Vehicles}, 
+>   title={Potato: A Data-Oriented Programming 3D Simulator for Large-Scale Heterogeneous Swarm Robotics}, 
+>   year={2023},
+>   pages={1-4}}
+> ```
+
 
 ## Installation
 
@@ -14,7 +23,7 @@ This simulator only contains dynamics and body rate controller, and it leverages
 2. install PyTorch with GPU option following https://pytorch.org/get-started/locally/
 
 3. Create a workspace for ROS noetic, then go to the /src
-4. `sudo apt install ros-noetic-mavros_msgs`
+4. `sudo apt install ros-noetic-mavros-msgs`
 5. `git clone https://github.com/Li-Jinjie/dop_sim.git`
 6. `catkin build` to build the whole workspace. Done!
 
