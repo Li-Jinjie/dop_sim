@@ -4,7 +4,9 @@ DOP SIM is a simulator using DOP (Data-oriented Programming) paradigm, supportin
 
 <img src="./figs/triangle_sim.gif" align="LEFT" alt="dop_sim" style="zoom: 150%;" />
 
-This simulator only contains dynamics and body rate controller, and it leverages mavros_msgs as communication protocol, aiming to be compatible with MAVROS. If you want to achieve the effect in above gif, including trajectory generation and control, please visit another repositories [link].
+This simulator only contains dynamics and body rate controller, and it leverages mavros_msgs as communication protocol, aiming to be compatible with MAVROS. If you want to achieve the effect in above gif, including trajectory generation and control, please visit another repository: https://github.com/Li-Jinjie/ndp_nmpc_qd.
+
+Read paper for more details: https://arxiv.org/abs/2308.12698
 
 ## Citation
 
