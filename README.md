@@ -12,8 +12,8 @@ Read paper for more details: https://arxiv.org/abs/2308.12698
 
 > ```
 > @INPROCEEDINGS{author={Li, Jinjie and Han, Liang and Yu, Haoyang and Wang, Zhaotian and Yang, Pengzhi and Yan, Ziwei and Ren, Zhang},
->   booktitle={ICRA 2023 Workshop on The Role of Robotics Simulators for Unmanned Aerial Vehicles}, 
->   title={Potato: A Data-Oriented Programming 3D Simulator for Large-Scale Heterogeneous Swarm Robotics}, 
+>   booktitle={ICRA 2023 Workshop on The Role of Robotics Simulators for Unmanned Aerial Vehicles},
+>   title={Potato: A Data-Oriented Programming 3D Simulator for Large-Scale Heterogeneous Swarm Robotics},
 >   year={2023},
 >   pages={1-4}}
 > ```
@@ -23,7 +23,6 @@ Read paper for more details: https://arxiv.org/abs/2308.12698
 
 1. install ROS noetic following http://wiki.ros.org/noetic/Installation/Ubuntu
 2. install PyTorch with GPU option following https://pytorch.org/get-started/locally/
-
 3. Create a workspace for ROS noetic, then go to the /src
 4. `sudo apt install ros-noetic-mavros-msgs`
 5. `git clone https://github.com/Li-Jinjie/dop_sim.git`
